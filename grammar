@@ -1,0 +1,96 @@
+program :
+        | decVar
+        | decFunc
+        | program
+        ;
+
+decVar  : type NAME compVar SEMICOL
+        ;
+
+compVar :
+        | ASSIGN expr
+        ;
+
+decFunc : DEF type NAME OPENPAR paramList CLOSEPAR block
+        ;
+
+paramList : type NAME rcsParamList
+          ;
+
+rcsParamList  :
+              | COMMA type NAME rcsParamList
+              ;
+
+block : OPENCH multVar multStmt CLOSECH
+      ;
+
+multVar :
+        | decVar multVar
+        ;
+
+multStmt :
+        | decVar multStmt
+        ;
+
+stmt : NAME ASSIGN expr SEMICOL
+        | funcCall SEMICOL
+
+        | IF OPENPAR expr CLOSEPAR block compElse
+        | WHILE OPENPAR expr CLOSEPAR block
+        | RETURN compExpr SEMICOL
+        | BREAK SEMICOL
+        | CONTINUE SEMICOL
+        ;
+
+compElse  :
+          | ELSE block
+          ;
+
+compExpr :
+         | expr
+         ;
+
+
+funCall : NAME OPENPAR compArglist CLOSEPAR
+        ;
+
+compArglist :
+            | arglist
+            ;
+
+arglist     : expr multExpr
+            ;
+
+multExpr  :
+          | COMMA expr multExpr
+          ;
+
+expr      : expr binop expr
+          | unop expr
+          | OPENPAR expr CLOSEPAR
+          | funCall
+          | DECIMAL
+          | ID
+          ;
+
+binop     : PLUS
+          | MINUS
+          | TIMES
+          | DIV
+          | LT
+          | LTEQ
+          | GT
+          | GTEQ
+          | EQ
+          | NEQ
+          | AND
+          | OR
+          ;
+
+unop      : MINUS
+          | NOT
+          ;
+
+type      : INT
+          | VOID
+          ;

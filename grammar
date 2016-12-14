@@ -1,7 +1,6 @@
 program :
         | decVar
         | decFunc
-        | program
         ;
 
 decVar  : type NAME compVar SEMICOL
@@ -65,30 +64,23 @@ multExpr  :
           | COMMA expr multExpr
           ;
 
-expr      : expr binop expr
-          | unop expr
+expr      : NUMBER
+          | NAME
           | OPENPAR expr CLOSEPAR
-          | funCall
-          | DECIMAL
-          | ID
-          ;
-
-binop     : PLUS
-          | MINUS
-          | TIMES
-          | DIV
-          | LT
-          | LTEQ
-          | GT
-          | GTEQ
-          | EQ
-          | NEQ
-          | AND
-          | OR
-          ;
-
-unop      : MINUS
-          | NOT
+          | funcCall
+          | expr PLUS expr
+          | expr MINUS expr
+          | expr DIV expr
+          | expr TIMES expr
+          | expr OR expr
+          | expr AND expr
+          | expr LT expr
+          | expr LTEQ expr
+          | expr GT expr
+          | expr GTEQ expr
+          | expr NEQ expr
+          | NOT expr
+          | MINUS expr
           ;
 
 type      : INT

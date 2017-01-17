@@ -52,88 +52,92 @@ tipoTree *treeRoot = NULL;
 %start programa
 
 %%
-program :
-        | decVar
-        | decFunc
+s       : program { 
+		if ($1 != NULL){
+			$$ = cria_node("programa", 1, $1);
+			treeRoot = $$;
+		}
+		};
+
+program : decVar { $$ = cria_node("program", 1, $1); }
+        | decFunc { $$ = cria_node("program", 1, $1); }
         ;
 
-decVar  : type NAME compVar SEMICOL
+decVar  : type NAME compVar SEMICOL { $$ = cria_node("decVar", 4, $1, terminalToken("name", NAME), $3, terminalToken("semicol", SEMICOL)); }
         ;
 
-compVar :
-        | ASSIGN expr
+compVar : {$$ = NULL;}
+        | ASSIGN expr { $$ = cria_node("decVar", 2, terminalToken("assign", ASSIGN), $2); }
         ;
 
-decFunc : DEF type NAME OPENPAR paramList CLOSEPAR block
+decFunc : DEF type NAME OPENPAR paramList CLOSEPAR block { $$ = cria_node("decFunc" , 7, terminalToken("def", DEF), $2, terminalToken("name", NAME), terminalToken("openpar", OPENPAR), $5, terminalToken("closepar", CLOSEPAR), $7); }
         ;
 
-paramList : type NAME rcsParamList
+paramList : type NAME rcsParamList { $$ = cria_node("paramList", 3, $1, terminalToken("name", NAME), $3); }
           ;
 
-rcsParamList  :
-              | COMMA type NAME rcsParamList
+rcsParamList  : { $$ = NULL; }
+              | COMMA type NAME rcsParamList { $$ = cria_node("paramList", 4, terminalToken("comma", COMMA), $2, terminalToken("name", NAME), $4); }
               ;
 
-block : OPENCH multVar multStmt CLOSECH
+block : OPENCH multVar multStmt CLOSECH { $$ = cria_node("block", 4, terminalToken("opench", OPENCH)); }
       ;
 
-multVar :
-        | decVar multVar
+multVar : { $$ = NULL; }
+        | decVar multVar { $$ = cria_node("multVar", $1, $2); }
         ;
 
-multStmt :
-        | decVar multStmt
-        ;
-
-stmt : NAME ASSIGN expr SEMICOL
-        | funcCall SEMICOL
-
-        | IF OPENPAR expr CLOSEPAR block compElse
-        | WHILE OPENPAR expr CLOSEPAR block
-        | RETURN compExpr SEMICOL
-        | BREAK SEMICOL
-        | CONTINUE SEMICOL
-        ;
-
-compElse  :
-          | ELSE block
-          ;
-
-compExpr :
-         | expr
+multStmt : { $$ = NULL; }
+         | decVar multStmt { $$ = cria_node("multStmt", $1, $2); }
          ;
 
-
-funCall : NAME OPENPAR compArglist CLOSEPAR
+stmt :    NAME ASSIGN expr SEMICOL { $$ = cria_node("stmt", 4, terminalToken("name", NAME), terminalToken("assign", ASSIGN), $3, terminalToken("semicol", SEMICOL)); }
+        | funcCall SEMICOL { $$ = cria_node("stmt", 2, $1, terminalToken("semicol", SEMICOL)); }
+        | IF OPENPAR expr CLOSEPAR block compElse { $$ = cria_node("stmt", 6, terminalToken("if", IF), terminalToken("openpar", OPENPAR), $3, terminalToken("closepar", CLOSEPAR), $5, $6); }
+        | WHILE OPENPAR expr CLOSEPAR block { $$ = cria_node("stmt", 5, terminalToken("while", WHILE), terminalToken("openpar", OPENPAR), $3, terminalToken("closepar", CLOSEPAR), $5); }
+        | RETURN compExpr SEMICOL  { $$ = cria_node("stmt", 3, terminalToken("return", RETURN), $2, terminalToken("semicol", SEMICOL)); }
+        | BREAK SEMICOL  { $$ = cria_node("stmt", 2, terminalToken("break", BREAK), terminalToken("semicol", SEMICOL)); }
+        | CONTINUE SEMICOL  { $$ = cria_node("stmt", 2, terminalToken("continue", CONTINUE), terminalToken("semicol", SEMICOL)); }
         ;
 
-compArglist :
-            | arglist
-            ;
-
-arglist     : expr multExpr
-            ;
-
-multExpr  :
-          | COMMA expr multExpr
+compElse  : { $$ = NULL; }
+          | ELSE block  { $$ = cria_node("compelse", 2, terminalToken("else", ELSE), $2); }
           ;
 
-expr      : NUMBER
-          | NAME
-          | OPENPAR expr CLOSEPAR
-          | funcCall
-          | expr PLUS expr
-          | expr MINUS expr
-          | expr DIV expr
-          | expr TIMES expr
-          | expr OR expr
-          | expr AND expr
-          | expr LT expr
-          | expr LTEQ expr
-          | expr GT expr
-          | expr GTEQ expr
-          | expr NEQ expr
-          | NOT expr
+compExpr : {$$ = NULL; }
+         | expr  { $$ = cria_node("compexp", 1, $1); }
+         ;
+
+funCall : NAME OPENPAR compArglist CLOSEPAR  { $$ = cria_node("funCall", 4, terminalToken("name", NAME), terminalToken("openpar", OPENPAR), $3, terminalToken("closepar", CLOSEPAR)); }
+        ;
+
+compArglist : { $$ = NULL; }
+            | arglist  { $$ = cria_node("compArglist", 1, $1); }
+            ;
+
+arglist     : expr multExpr  { $$ = cria_node("arglist", 2, $1, $2); }
+            ;
+
+multExpr  : { $$ = NULL; }
+          | COMMA expr multExpr  { $$ = cria_node("multExpr", 3, terminalToken("comma", COMMA), $2, $3); }
+          ;
+
+expr      : NUMBER { $$ = terminalToken("number", NUMBER); }
+          | NAME { $$ = terminalToken("name", NAME); }
+          | OPENPAR expr CLOSEPAR  { $$ = cria_node("expr", 3, terminalToken("openpar", OPENPAR), $2, terminalToken("closepar", CLOSEPAR)); }
+          | funcCall  { $$ = cria_node("expr", $1); }
+          | expr PLUS expr { $$ = cria_node("expr", 3, $1, terminalToken("+", PLUS), $3); }
+          | expr MINUS expr  { $$ = cria_node("expr", 3, $1, terminalToken("-", MINUS), $3); }
+          | expr DIV expr { $$ = cria_node("expr", 3, $1, terminalToken("/", DIV), $3); }
+          | expr TIMES expr { $$ = cria_node("expr", 3, $1, terminalToken("*", TIMES), $3); }
+          | expr OR expr { $$ = cria_node("expr", 3, $1, terminalToken("or", OR), $3); }
+          | expr AND expr { $$ = cria_node("expr", 3, $1, terminalToken("and", AND), $3); }
+          | expr LT expr { $$ = cria_node("expr", 3, $1, terminalToken("<", LT), $3); }
+          | expr LTEQ expr { $$ = cria_node("expr", 3, $1, terminalToken("<=", LTEQ), $3); }
+          | expr GT expr { $$ = cria_node("expr", 3, $1, terminalToken(">", GT), $3); }
+          | expr GTEQ expr { $$ = cria_node("expr", 3, $1, terminalToken(">=", GTEQ), $3); }
+          | expr NEQ expr { $$ = cria_node("expr", 3, $1, terminalToken("!=", NEQ), $3); }
+          | NOT expr {}
           | MINUS expr
           ;
 

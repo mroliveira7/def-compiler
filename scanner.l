@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "parser.h"
+#include "y.tab.h"
 
 int flag_comma = 1;
 %}
@@ -16,137 +18,137 @@ id					[a-zA-Z_][a-zA-Z_0-9]*
 
 "&&"				{
 						printf("SYM  \"%c%c\"\n", 38, 38);
-						// return AND;
+						return AND;
 					}
 "!"					{
 						printf("SYM  \"%c\"\n", 33);
-						// return NOT;
+						return NOT;
 					}
 "||"				{
 						printf("SYM  \"%c%c\"\n", 124, 124);
-						// return OR;
+						return OR;
 					}
 "while"				{
 						printf("KEY  \"while\"\n");
-						// return WHILE;
+						return WHILE;
 					}
 "else"				{
 						printf("KEY  \"else\"\n");
-						// return ELSE;
+						return ELSE;
 					}
 "if"				{
 						printf("KEY  \"if\"\n");
-						// return IF;
+						return IF;
 					}
 "return"			{
 						printf("KEY  \"return\"\n");
-						// return RETURN;
+						return RETURN;
 					}
 "void"				{
 						printf("KEY  \"void\"\n");
-						// return VOID;
+						return VOID;
 					}
 "def"				{
 						printf("KEY  \"def\"\n");
-						// return DEF;
+						return DEF;
 					}
 "break"				{
 						printf("KEY  \"break\"\n");
-						// return BREAK;
+						return BREAK;
 					}
 "continue"			{
 						printf("KEY  \"continue\"\n");
-						// return CONTINUE;
+						return CONTINUE;
 					}
 "int"				{
 						printf("KEY  \"int\"\n");
-						// return INT;
+						return INT;
 					}
 
 {id}				{
 						printf("ID   \"%s\"\n", yytext);
 						// strcpy(yylval.id, yytext);
-						// return NAME;
+						return NAME;
 					}
 {number}			{
 						printf("DEC  \"%s\"\n", yytext);
-						// return NUMBER;
+						return NUMBER;
 					}
 "+"					{
 						printf("SYM  \"%c\"\n", 43);
-						// return PLUS;
+						return PLUS;
 					}
 "-"					{
 						printf("SYM  \"%c\"\n", 45);
-						// return MINUS;
+						return MINUS;
 					}
 "*"					{
 						printf("SYM  \"%c\"\n", 42);
-						// return TIMES;
+						return TIMES;
 					}
 "/"					{
 						printf("SYM  \"%c\"\n", 47);
-						// return DIV;
+						return DIV;
 					}
 ","					{
 						printf("SYM  \"%c\"\n", 44);
-						// return COMMA;
+						return COMMA;
 					}
 ";"					{
 						printf("SYM  \"%c\"\n", 59);
-						// return SEMICOL;
+						return SEMICOL;
 					}
 "="					{
 						printf("SYM  \"%c\"\n", 61);
-						// return ASSIGN;
+						return ASSIGN;
 					}
 "=="				{
 						printf("SYM  \"%c%c\"\n", 61, 61);
-						// return EQ;
+						return EQ;
 					}
 "!="				{
 						printf("SYM  \"%c%c\"\n", 33, 61);
-						// return NEQ;
+						return NEQ;
 					}
 "<="				{
 						printf("SYM  \"%c%c\"\n", 60, 61);
-						// return LTEQ;
+						return LTEQ;
 					}
 ">="				{
 						printf("SYM  \"%c%c\"\n", 62,61);
-						// return GTEQ;
+						return GTEQ;
 					}
 "<"					{
 						printf("SYM  \"%c\"\n", 60);
-						// return LT;
+						return LT;
 					}
 ">"					{
 						printf("SYM  \"%c\"\n", 62);
-						// return GT;
+						return GT;
 					}
 ")"					{
 						printf("SYM  \"%c\"\n", 41);
-						// return CLOSEPAR;
+						return CLOSEPAR;
 					}
 "("					{
 						printf("SYM  \"%c\"\n", 40);
-						// return OPENPAR;
+						return OPENPAR;
 					}
 "["					{
 						printf("SYM  \"%c\"\n", 91);
-						// return OPENCOLC;
+						return OPENCOLC;
 					}
 "]"					{
 						printf("SYM  \"%c\"\n", 93);
-						// return CLOSECOLC;
+						return CLOSECOLC;
 					}
 "{"					{
 						printf("SYM  \"%c\"\n", 123);
-						// return OPENCH;
+						return OPENCH;
 					}
 "}"					{
 						printf("SYM  \"%c\"\n", 125);
-						// return CLOSECH;
+						return CLOSECH;
 					}
 
 \n					yylineno++;
@@ -175,9 +177,4 @@ simple_comment(){
 
 int yywrap(void) {
     return 1;
-}
-
-int main(){
-	yylex();
-	return 0;
 }

@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
+#include "parser.h"
 
 #define YYDEBUG 1
 
@@ -14,6 +15,7 @@ int yylex(void);
 tipoTree * cria_node(char nonT[20], int n_filhos, ...);
 tipoTree * terminalNumber(int token_n);
 tipoTree * terminalToken(char id[20], int token_n);
+char * consultaToken(int token_n);
 void yyerror(char *string);
 
 
@@ -47,14 +49,14 @@ tipoTree *treeRoot = NULL;
 %left TIMES DIV
 %right NOT
 
-<type> programa decVar decFunc programa type compVar arglist multExpr compArglist expr paramList block rcsParamList multVar multStmt funcCall compElse compExpr
+%type <treePointer> s program decVar decFunc  type compVar arglist multExpr compArglist expr paramList block rcsParamList multVar stmt multStmt funCall compElse compExpr
 
-%start programa
+%start s
 
 %%
-s       : program { 
+s       : program {
 		if ($1 != NULL){
-			$$ = cria_node("programa", 1, $1);
+			$$ = cria_node("program", 1, $1);
 			treeRoot = $$;
 		}
 		};
@@ -84,15 +86,15 @@ block : OPENCH multVar multStmt CLOSECH { $$ = cria_node("block", 4, terminalTok
       ;
 
 multVar : { $$ = NULL; }
-        | decVar multVar { $$ = cria_node("multVar", $1, $2); }
+        | decVar multVar { $$ = cria_node("multVar", 2, $1, $2); }
         ;
 
 multStmt : { $$ = NULL; }
-         | decVar multStmt { $$ = cria_node("multStmt", $1, $2); }
+         | decVar multStmt { $$ = cria_node("multStmt", 2, $1, $2); }
          ;
 
 stmt :    NAME ASSIGN expr SEMICOL { $$ = cria_node("stmt", 4, terminalToken("name", NAME), terminalToken("assign", ASSIGN), $3, terminalToken("semicol", SEMICOL)); }
-        | funcCall SEMICOL { $$ = cria_node("stmt", 2, $1, terminalToken("semicol", SEMICOL)); }
+        | funCall SEMICOL { $$ = cria_node("stmt", 2, $1, terminalToken("semicol", SEMICOL)); }
         | IF OPENPAR expr CLOSEPAR block compElse { $$ = cria_node("stmt", 6, terminalToken("if", IF), terminalToken("openpar", OPENPAR), $3, terminalToken("closepar", CLOSEPAR), $5, $6); }
         | WHILE OPENPAR expr CLOSEPAR block { $$ = cria_node("stmt", 5, terminalToken("while", WHILE), terminalToken("openpar", OPENPAR), $3, terminalToken("closepar", CLOSEPAR), $5); }
         | RETURN compExpr SEMICOL  { $$ = cria_node("stmt", 3, terminalToken("return", RETURN), $2, terminalToken("semicol", SEMICOL)); }
@@ -125,7 +127,7 @@ multExpr  : { $$ = NULL; }
 expr      : NUMBER { $$ = terminalToken("number", NUMBER); }
           | NAME { $$ = terminalToken("name", NAME); }
           | OPENPAR expr CLOSEPAR  { $$ = cria_node("expr", 3, terminalToken("openpar", OPENPAR), $2, terminalToken("closepar", CLOSEPAR)); }
-          | funcCall  { $$ = cria_node("expr", $1); }
+          | funCall  { $$ = cria_node("expr", 1, $1); }
           | expr PLUS expr { $$ = cria_node("expr", 3, $1, terminalToken("+", PLUS), $3); }
           | expr MINUS expr  { $$ = cria_node("expr", 3, $1, terminalToken("-", MINUS), $3); }
           | expr DIV expr { $$ = cria_node("expr", 3, $1, terminalToken("/", DIV), $3); }
@@ -136,13 +138,13 @@ expr      : NUMBER { $$ = terminalToken("number", NUMBER); }
           | expr LTEQ expr { $$ = cria_node("expr", 3, $1, terminalToken("<=", LTEQ), $3); }
           | expr GT expr { $$ = cria_node("expr", 3, $1, terminalToken(">", GT), $3); }
           | expr GTEQ expr { $$ = cria_node("expr", 3, $1, terminalToken(">=", GTEQ), $3); }
-          | expr NEQ expr { $$ = cria_node("expr", 3, $1, terminalToken("!=", NEQ), $3); }
-          | NOT expr {}
-          | MINUS expr
+          | expr NEQ expr { $$ = cria_node("expr", 3, $1, terminalToken("<>", NEQ), $3); }
+          | NOT expr { $$ = cria_node("expr", 2, terminalToken("!", NOT), $2); }
+          | MINUS expr { $$ = cria_node("expr", 2, terminalToken("-", MINUS), $2); }
           ;
 
-type      : INT
-          | VOID
+type      : INT { $$ = terminalToken("int", INT); }
+          | VOID { $$ = terminalToken("void", VOID); }
           ;
 
 %%
@@ -189,6 +191,86 @@ tipoTree * terminalToken(char id[20], int token_n){
 }
 
 void yyerror(char *string){  fprintf(stderr, "%s\n", string); }
+
+char * consultaToken(int token_n){
+
+	switch( token_n ){
+		case AND :
+			return "T_AND";
+			break;
+		case  NOT:
+			return "T_NOT";
+			break;
+		case OR:
+			return "T_OR";
+			break;
+		case WHILE:
+			return "T_WHILE";
+			break;
+		case ELSE:
+			return "T_ELSE";
+			break;
+		case IF:
+			return "T_IF";
+			break;
+		case RETURN:
+			return "T_RETURN";
+			break;
+		case NAME:
+			return "T_NAME";
+			break;
+		case NUMBER:
+			return "T_NUMBER";
+			break;
+		case PLUS:
+			return "T_PLUS";
+			break;
+		case MINUS:
+			return "T_MINUS";
+			break;
+		case TIMES:
+			return "T_TIMES";
+			break;
+		case DIV:
+			return "T_DIV";
+			break;
+		case COMMA:
+			return "T_COMMA";
+			break;
+		case SEMICOL:
+			return "T_SEMICOL";
+			break;
+		case ASSIGN:
+			return "T_ASSIGN";
+			break;
+		case EQ:
+			return "T_EQ";
+			break;
+		case NEQ:
+			return "T_NEQ";
+			break;
+		case LTEQ:
+			return "T_LTEQ";
+			break;
+		case GTEQ:
+			return "T_GTEQ";
+			break;
+		case LT:
+			return "T_LT";
+			break;
+		case GT:
+			return "T_GT";
+			break;
+		case CLOSEPAR:
+			return "T_CLOSEPAR";
+			break;
+		case OPENPAR:
+			return "T_OPENPAR";
+			break;
+		default :
+			return "NONE";
+	}
+};
 
 int printTree(tipoTree *p){
 

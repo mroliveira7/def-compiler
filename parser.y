@@ -66,14 +66,14 @@ program : decVar { $$ = cria_node("program", 1, $1); }
         | decFunc { $$ = cria_node("program", 1, $1); }
         ;
 
-decVar  : type NAME compVar SEMICOL { $$ = cria_node("decVar", 4, $1, terminalToken("name", NAME), $3, terminalToken("semicol", SEMICOL)); }
+decVar  : type NAME compVar SEMICOL { $$ = cria_node("decVar", 4, $1, terminalToken("name", NAME), $3, terminalToken(";", SEMICOL)); }
         ;
 
 compVar : {$$ = NULL;}
-        | ASSIGN expr { $$ = cria_node("decVar", 2, terminalToken("assign", ASSIGN), $2); }
+        | ASSIGN expr { $$ = cria_node("decVar", 2, terminalToken("=", ASSIGN), $2); }
         ;
 
-decFunc : DEF type NAME OPENPAR paramList CLOSEPAR block { $$ = cria_node("decFunc" , 7, terminalToken("def", DEF), $2, terminalToken("name", NAME), terminalToken("openpar", OPENPAR), $5, terminalToken("closepar", CLOSEPAR), $7); }
+decFunc : DEF type NAME OPENPAR paramList CLOSEPAR block { $$ = cria_node("decFunc" , 7, terminalToken("def", DEF), $2, terminalToken("name", NAME), terminalToken("(", OPENPAR), $5, terminalToken(")", CLOSEPAR), $7); }
         ;
 
 paramList : {$$ = NULL;}
@@ -81,10 +81,10 @@ paramList : {$$ = NULL;}
           ;
 
 rcsParamList  : { $$ = NULL; }
-              | COMMA type NAME rcsParamList { $$ = cria_node("paramList", 4, terminalToken("comma", COMMA), $2, terminalToken("name", NAME), $4); }
+              | COMMA type NAME rcsParamList { $$ = cria_node("paramList", 4, terminalToken(",", COMMA), $2, terminalToken("name", NAME), $4); }
               ;
 
-block : OPENCH multVar multStmt CLOSECH { $$ = cria_node("block", 4, terminalToken("opench", OPENCH)); }
+block : OPENCH multVar multStmt CLOSECH { $$ = cria_node("block", 4, terminalToken("{", OPENCH), $2, $3, terminalToken("}", CLOSECH)); }
       ;
 
 multVar : { $$ = NULL; }
@@ -95,13 +95,13 @@ multStmt : { $$ = NULL; }
          | stmt multStmt { $$ = cria_node("multStmt", 2, $1, $2); }
          ;
 
-stmt :    NAME ASSIGN expr SEMICOL { $$ = cria_node("stmt", 4, terminalToken("name", NAME), terminalToken("assign", ASSIGN), $3, terminalToken("semicol", SEMICOL)); }
-        | funCall SEMICOL { $$ = cria_node("stmt", 2, $1, terminalToken("semicol", SEMICOL)); }
-        | IF OPENPAR expr CLOSEPAR block compElse { $$ = cria_node("stmt", 6, terminalToken("if", IF), terminalToken("openpar", OPENPAR), $3, terminalToken("closepar", CLOSEPAR), $5, $6); }
-        | WHILE OPENPAR expr CLOSEPAR block { $$ = cria_node("stmt", 5, terminalToken("while", WHILE), terminalToken("openpar", OPENPAR), $3, terminalToken("closepar", CLOSEPAR), $5); }
-        | RETURN compExpr SEMICOL  { $$ = cria_node("stmt", 3, terminalToken("return", RETURN), $2, terminalToken("semicol", SEMICOL)); }
-        | BREAK SEMICOL  { $$ = cria_node("stmt", 2, terminalToken("break", BREAK), terminalToken("semicol", SEMICOL)); }
-        | CONTINUE SEMICOL  { $$ = cria_node("stmt", 2, terminalToken("continue", CONTINUE), terminalToken("semicol", SEMICOL)); }
+stmt :    NAME ASSIGN expr SEMICOL { $$ = cria_node("stmt", 4, terminalToken("name", NAME), terminalToken("=", ASSIGN), $3, terminalToken(";", SEMICOL)); }
+        | funCall SEMICOL { $$ = cria_node("stmt", 2, $1, terminalToken(";", SEMICOL)); }
+        | IF OPENPAR expr CLOSEPAR block compElse { $$ = cria_node("stmt", 6, terminalToken("if", IF), terminalToken("(", OPENPAR), $3, terminalToken(")", CLOSEPAR), $5, $6); }
+        | WHILE OPENPAR expr CLOSEPAR block { $$ = cria_node("stmt", 5, terminalToken("while", WHILE), terminalToken("(", OPENPAR), $3, terminalToken(")", CLOSEPAR), $5); }
+        | RETURN compExpr SEMICOL  { $$ = cria_node("stmt", 3, terminalToken("return", RETURN), $2, terminalToken(";", SEMICOL)); }
+        | BREAK SEMICOL  { $$ = cria_node("stmt", 2, terminalToken("break", BREAK), terminalToken(";", SEMICOL)); }
+        | CONTINUE SEMICOL  { $$ = cria_node("stmt", 2, terminalToken("continue", CONTINUE), terminalToken(";", SEMICOL)); }
         ;
 
 compElse  : { $$ = NULL; }
@@ -112,7 +112,7 @@ compExpr : {$$ = NULL; }
          | expr  { $$ = cria_node("compexp", 1, $1); }
          ;
 
-funCall : NAME OPENPAR compArglist CLOSEPAR  { $$ = cria_node("funCall", 4, terminalToken("name", NAME), terminalToken("openpar", OPENPAR), $3, terminalToken("closepar", CLOSEPAR)); }
+funCall : NAME OPENPAR compArglist CLOSEPAR  { $$ = cria_node("funCall", 4, terminalToken("name", NAME), terminalToken("(", OPENPAR), $3, terminalToken(")", CLOSEPAR)); }
         ;
 
 compArglist : { $$ = NULL; }
@@ -123,12 +123,12 @@ arglist     : expr multExpr  { $$ = cria_node("arglist", 2, $1, $2); }
             ;
 
 multExpr  : { $$ = NULL; }
-          | COMMA expr multExpr  { $$ = cria_node("multExpr", 3, terminalToken("comma", COMMA), $2, $3); }
+          | COMMA expr multExpr  { $$ = cria_node("multExpr", 3, terminalToken(",", COMMA), $2, $3); }
           ;
 
 expr      : NUMBER { $$ = terminalToken("number", NUMBER); }
           | NAME { $$ = terminalToken("name", NAME); }
-          | OPENPAR expr CLOSEPAR  { $$ = cria_node("expr", 3, terminalToken("openpar", OPENPAR), $2, terminalToken("closepar", CLOSEPAR)); }
+          | OPENPAR expr CLOSEPAR  { $$ = cria_node("expr", 3, terminalToken("(", OPENPAR), $2, terminalToken(")", CLOSEPAR)); }
           | funCall  { $$ = cria_node("expr", 1, $1); }
           | expr PLUS expr { $$ = cria_node("expr", 3, $1, terminalToken("+", PLUS), $3); }
           | expr MINUS expr  { $$ = cria_node("expr", 3, $1, terminalToken("-", MINUS), $3); }
@@ -200,7 +200,7 @@ char * consultaToken(int token_n){
 		case AND :
 			return "T_AND";
 			break;
-		case  NOT:
+		case NOT:
 			return "T_NOT";
 			break;
 		case OR:
@@ -269,6 +269,18 @@ char * consultaToken(int token_n){
 		case OPENPAR:
 			return "T_OPENPAR";
 			break;
+		case OPENCH:
+			return "T_OPENCH";
+			break;
+		case CLOSECH:
+			return "T_CLOSECH";
+			break;
+		case DEF:
+			return "T_DEF";
+			break;
+		case INT:
+			return "T_INT";
+			break;
 		default :
 			return "NONE";
 	}
@@ -279,15 +291,12 @@ int printTree(tipoTree *p){
 	if(p == NULL)
 		return 0;
 	if(p->nonTerminal != NULL)
-		fprintf(yyout,"[%s ", p->nonTerminal);
+		printf("[%s ", p->nonTerminal);
 	else
-		fprintf(yyout, "[");
+		printf("[");
 	if(p->num_filhos == 0)
 	{
-		if (p->tokenNumber == NUMBER)
-			fprintf(yyout, "%s %d", consultaToken(p->tokenNumber), p->number);
-		else
-			fprintf(yyout, "%s %s", consultaToken(p->tokenNumber), p->id);
+			printf("%s %s", consultaToken(p->tokenNumber), p->id);
 	}
 	else
 	{
@@ -295,7 +304,7 @@ int printTree(tipoTree *p){
 		for(i = 0; i < p->num_filhos; i++)
 			printTree(p->filhos[i]);
 	}
-	fprintf(yyout,"]");
+	printf("]");
 }
 
 int main(int argc, char** argv){
@@ -307,7 +316,8 @@ int main(int argc, char** argv){
 	else{
 		yyparse();
 	}
-	// printTree(treeRoot);
+	printTree(treeRoot);
+	printf("\n");
 	fclose(yyin);
 	fclose(yyout);
 

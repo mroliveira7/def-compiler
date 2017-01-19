@@ -2163,6 +2163,17 @@ simple_comment(){
 	yylineno++;
 }
 
+// int main(){
+// 	yyin = fopen(argv[1], "r");
+// 	yyout = fopen(argv[2], "w");
+//
+// 	if(!yyin) printf("Arquivo nao pode ser aberto!\n");
+// 	else{
+// 		yylex();
+// 	}
+// 	return 0;
+// }
+
 int yywrap(void) {
     return 1;
 }

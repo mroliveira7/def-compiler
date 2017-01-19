@@ -90,7 +90,7 @@ multVar : { $$ = NULL; }
         ;
 
 multStmt : { $$ = NULL; }
-         | decVar multStmt { $$ = cria_node("multStmt", 2, $1, $2); }
+         | stmt multStmt { $$ = cria_node("multStmt", 2, $1, $2); }
          ;
 
 stmt :    NAME ASSIGN expr SEMICOL { $$ = cria_node("stmt", 4, terminalToken("name", NAME), terminalToken("assign", ASSIGN), $3, terminalToken("semicol", SEMICOL)); }

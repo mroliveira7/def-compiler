@@ -1,3 +1,7 @@
+s       :
+        | program s
+        ;
+
 program :
         | decVar
         | decFunc
@@ -13,7 +17,8 @@ compVar :
 decFunc : DEF type NAME OPENPAR paramList CLOSEPAR block
         ;
 
-paramList : type NAME rcsParamList
+paramList :
+          | type NAME rcsParamList
           ;
 
 rcsParamList  :
@@ -33,7 +38,6 @@ multStmt :
 
 stmt : NAME ASSIGN expr SEMICOL
         | funcCall SEMICOL
-
         | IF OPENPAR expr CLOSEPAR block compElse
         | WHILE OPENPAR expr CLOSEPAR block
         | RETURN compExpr SEMICOL

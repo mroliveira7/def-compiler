@@ -54,11 +54,12 @@ tipoTree *treeRoot = NULL;
 %start s
 
 %%
-s       : program {
-		if ($1 != NULL){
-			$$ = cria_node("program", 1, $1);
-			treeRoot = $$;
-		}
+s       : {$$ = NULL;}
+		| program s {
+			if ($1 != NULL){
+				$$ = cria_node("program", 2, $1, $2);
+				treeRoot = $$;
+			}
 		};
 
 program : decVar { $$ = cria_node("program", 1, $1); }
@@ -75,7 +76,8 @@ compVar : {$$ = NULL;}
 decFunc : DEF type NAME OPENPAR paramList CLOSEPAR block { $$ = cria_node("decFunc" , 7, terminalToken("def", DEF), $2, terminalToken("name", NAME), terminalToken("openpar", OPENPAR), $5, terminalToken("closepar", CLOSEPAR), $7); }
         ;
 
-paramList : type NAME rcsParamList { $$ = cria_node("paramList", 3, $1, terminalToken("name", NAME), $3); }
+paramList : {$$ = NULL;}
+ 		  | type NAME rcsParamList { $$ = cria_node("paramList", 3, $1, terminalToken("name", NAME), $3); }
           ;
 
 rcsParamList  : { $$ = NULL; }
@@ -305,7 +307,7 @@ int main(int argc, char** argv){
 	else{
 		yyparse();
 	}
-
+	// printTree(treeRoot);
 	fclose(yyin);
 	fclose(yyout);
 

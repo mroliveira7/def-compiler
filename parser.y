@@ -287,6 +287,22 @@ char * consultaToken(int token_n){
 	}
 };
 
+int printParams(tipoTree *p){
+
+	int i;
+	if (p == NULL)
+		return 0;
+
+	if(p->tokenNumber == NAME){
+		printf(" [%s]", p->id);
+	}
+
+	for(i = 0; i < p->num_filhos; i++){
+		printParams(p->filhos[i]);
+	}
+	return 0;
+}
+
 int printTree(tipoTree *p, int depth){
 
 	
@@ -294,17 +310,29 @@ int printTree(tipoTree *p, int depth){
 	if(p == NULL)
 		return 0;
 	if(p->nonTerminal != NULL){
+		
+		//print Paramlist
+		if(strcmp(p->nonTerminal, "paramList") == 0)
+		{
+
+			for(i=0; i < depth; i++) printf(" ");
+			printf("[%s", p->nonTerminal);
+			printParams(p);
+			printf("]\n");
+			return 0;
+		}
+
 		for(i=0; i < depth; i++) printf(" ");
 		printf("[%s\n", p->nonTerminal);
-	}
-	else{
-		for(i=0; i < depth; i++) printf(" ");
-		printf("[");
 	}
 	
 	if(p->num_filhos == 0)
 	{
-		printf("%s]\n", p->id);
+		if (p->tokenNumber == INT || p->tokenNumber == VOID || p->tokenNumber == OPENPAR || p->tokenNumber == CLOSEPAR || p->tokenNumber == OPENCH || p->tokenNumber == CLOSECH || p->tokenNumber == SEMICOL)
+			return 1;
+
+		for(i=0; i < depth; i++) printf(" ");
+		printf("[%s]\n", p->id);
 		return 1;
 	}
 	else

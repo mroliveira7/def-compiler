@@ -95,9 +95,8 @@ multStmt : { $$ = NULL; }
          | stmt multStmt { $$ = cria_node("multStmt", 2, $1, $2); }
          ;
 
-stmt :    NAME ASSIGN expr SEMICOL { $$ = cria_node("stmt", 4, terminalToken($1
-	, NAME), terminalToken("=", ASSIGN), $3, terminalToken(";", SEMICOL)); }
-        | funCall SEMICOL { $$ = cria_node("stmt", 2, $1, terminalToken(";", SEMICOL)); }
+stmt :    NAME ASSIGN expr SEMICOL { $$ = cria_node("stmt", 4, terminalToken($1, NAME), terminalToken("=", ASSIGN), $3, terminalToken(";", SEMICOL)); }
+        | funCall SEMICOL { $$ = cria_node("funcall", 2, $1, terminalToken(";", SEMICOL)); }
         | IF OPENPAR expr CLOSEPAR block compElse { $$ = cria_node("stmt", 6, terminalToken("if", IF), terminalToken("(", OPENPAR), $3, terminalToken(")", CLOSEPAR), $5, $6); }
         | WHILE OPENPAR expr CLOSEPAR block { $$ = cria_node("stmt", 5, terminalToken("while", WHILE), terminalToken("(", OPENPAR), $3, terminalToken(")", CLOSEPAR), $5); }
         | RETURN compExpr SEMICOL  { $$ = cria_node("stmt", 3, terminalToken("return", RETURN), $2, terminalToken(";", SEMICOL)); }
@@ -113,7 +112,7 @@ compExpr : {$$ = NULL; }
          | expr  { $$ = cria_node("compexp", 1, $1); }
          ;
 
-funCall : NAME OPENPAR compArglist CLOSEPAR  { $$ = cria_node("funCall", 4, terminalToken($1, NAME), terminalToken("(", OPENPAR), $3, terminalToken(")", CLOSEPAR)); }
+funCall : NAME OPENPAR compArglist CLOSEPAR  { $$ = cria_node("funcall", 4, terminalToken($1, NAME), terminalToken("(", OPENPAR), $3, terminalToken(")", CLOSEPAR)); }
         ;
 
 compArglist : { $$ = NULL; }
@@ -130,7 +129,7 @@ multExpr  : { $$ = NULL; }
 expr      : NUMBER { $$ = terminalToken($1, NUMBER); }
           | NAME { $$ = terminalToken($1, NAME); }
           | OPENPAR expr CLOSEPAR  { $$ = cria_node("expr", 3, terminalToken("(", OPENPAR), $2, terminalToken(")", CLOSEPAR)); }
-          | funCall  { $$ = cria_node("expr", 1, $1); }
+          | funCall  { $$ = cria_node("funcall", 1, $1); }
           | expr PLUS expr { $$ = cria_node("expr", 3, $1, terminalToken("+", PLUS), $3); }
           | expr MINUS expr  { $$ = cria_node("expr", 3, $1, terminalToken("-", MINUS), $3); }
           | expr DIV expr { $$ = cria_node("expr", 3, $1, terminalToken("/", DIV), $3); }
@@ -193,99 +192,8 @@ tipoTree * terminalToken(char id[20], int token_n){
 	return aux;
 }
 
-void yyerror(char *string){  fprintf(stderr, "%s\n", string); }
-
-char * consultaToken(int token_n){
-
-	switch( token_n ){
-		case AND :
-			return "T_AND";
-			break;
-		case NOT:
-			return "T_NOT";
-			break;
-		case OR:
-			return "T_OR";
-			break;
-		case WHILE:
-			return "T_WHILE";
-			break;
-		case ELSE:
-			return "T_ELSE";
-			break;
-		case IF:
-			return "T_IF";
-			break;
-		case RETURN:
-			return "T_RETURN";
-			break;
-		case NAME:
-			return "T_NAME";
-			break;
-		case NUMBER:
-			return "T_NUMBER";
-			break;
-		case PLUS:
-			return "T_PLUS";
-			break;
-		case MINUS:
-			return "T_MINUS";
-			break;
-		case TIMES:
-			return "T_TIMES";
-			break;
-		case DIV:
-			return "T_DIV";
-			break;
-		case COMMA:
-			return "T_COMMA";
-			break;
-		case SEMICOL:
-			return "T_SEMICOL";
-			break;
-		case ASSIGN:
-			return "T_ASSIGN";
-			break;
-		case EQ:
-			return "T_EQ";
-			break;
-		case NEQ:
-			return "T_NEQ";
-			break;
-		case LTEQ:
-			return "T_LTEQ";
-			break;
-		case GTEQ:
-			return "T_GTEQ";
-			break;
-		case LT:
-			return "T_LT";
-			break;
-		case GT:
-			return "T_GT";
-			break;
-		case CLOSEPAR:
-			return "T_CLOSEPAR";
-			break;
-		case OPENPAR:
-			return "T_OPENPAR";
-			break;
-		case OPENCH:
-			return "T_OPENCH";
-			break;
-		case CLOSECH:
-			return "T_CLOSECH";
-			break;
-		case DEF:
-			return "T_DEF";
-			break;
-		case INT:
-			return "T_INT";
-			break;
-		default :
-			return "NONE";
-	}
-};
+void yyerror(char *string){  fprintf(stderr, "%s\n", string); 
+}
 
 int printParams(tipoTree *p){
 
@@ -303,18 +211,73 @@ int printParams(tipoTree *p){
 	return 0;
 }
 
+int printExpr(tipoTree *p, int depth){
+
+	int i;
+	if (p == NULL)
+		return 0;
+
+	if(p->tokenNumber == NUMBER || p->tokenNumber == NAME)
+	{
+		printf(" [%s]", p->id);
+		return 1;
+	}
+	else if(p->num_filhos == 3){
+		
+		if(p->filhos[0]->tokenNumber == OPENPAR)
+		{
+			printExpr(p->filhos[1], depth);
+			return 1;
+		}
+		else{
+			printf("[%s", p->filhos[1]->id);
+			printExpr(p->filhos[0], depth);
+			printExpr(p->filhos[2], depth);
+			printf("]");
+			return 1;
+		}
+	}
+	else if(p->num_filhos == 2){
+		printf("[%s", p->filhos[0]->id);
+		printExpr(p->filhos[1], depth);
+		printf("]\n");
+		return 1;
+	}
+
+	for(i = 0; i < p->num_filhos; i++){
+		printExpr(p->filhos[i], depth);
+	}
+	return 0;
+}
+
+int printArglist(tipoTree *p, int depth){
+
+	int i;
+	if (p == NULL)
+		return 0;
+
+	if( (p->nonTerminal != NULL) && strcmp(p->nonTerminal, "expr") == 0){
+		printExpr(p, depth);
+		return 1;
+	}
+
+	for(i = 0; i < p->num_filhos; i++){
+		printArglist(p->filhos[i], depth);
+	}
+	return 0;
+}
+
 int printTree(tipoTree *p, int depth){
 
-	
+
 	int i;
 	if(p == NULL)
 		return 0;
 	if(p->nonTerminal != NULL){
-		
+
 		//print Paramlist
 		if(strcmp(p->nonTerminal, "paramList") == 0)
 		{
-
 			for(i=0; i < depth; i++) printf(" ");
 			printf("[%s", p->nonTerminal);
 			printParams(p);
@@ -322,10 +285,26 @@ int printTree(tipoTree *p, int depth){
 			return 0;
 		}
 
+		//print expr
+		if(strcmp(p->nonTerminal, "expr") == 0 || strcmp(p->nonTerminal, "compexp") == 0){
+			for(i=0; i < depth; i++) printf(" ");
+			printExpr(p, depth);
+			printf("]\n");
+			return 0;
+		}
+		// print Arglist
+		if(strcmp(p->nonTerminal, "compArglist") == 0){
+			for(i=0; i < depth; i++) printf(" ");
+			printf("[arglist ");
+			printArglist(p, depth);
+			printf("]\n");
+			return 0;
+		}
+
 		for(i=0; i < depth; i++) printf(" ");
 		printf("[%s\n", p->nonTerminal);
 	}
-	
+
 	if(p->num_filhos == 0)
 	{
 		if (p->tokenNumber == INT || p->tokenNumber == VOID || p->tokenNumber == OPENPAR || p->tokenNumber == CLOSEPAR || p->tokenNumber == OPENCH || p->tokenNumber == CLOSECH || p->tokenNumber == SEMICOL)
@@ -338,10 +317,9 @@ int printTree(tipoTree *p, int depth){
 	else
 	{
 		for(i = 0; i < p->num_filhos; i++){
-
 			printTree(p->filhos[i], depth+1);
 		}
-		
+
 		for(i=0; i < depth; i++) printf(" ");
 		printf("]\n");
 	}

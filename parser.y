@@ -130,7 +130,7 @@ multExpr  : { $$ = NULL; }
 expr      : NUMBER { $$ = terminalToken($1, NUMBER); }
           | NAME { $$ = terminalToken($1, NAME); }
           | OPENPAR expr CLOSEPAR  { $$ = cria_node("expr", 3, terminalToken("(", OPENPAR), $2, terminalToken(")", CLOSEPAR)); }
-          | funCall  { $$ = cria_node("expr", 1, $1); }
+          | funCall  { $$ = cria_node("funcall", 1, $1); }
           | expr PLUS expr { $$ = cria_node("expr", 3, $1, terminalToken("+", PLUS), $3); }
           | expr MINUS expr  { $$ = cria_node("expr", 3, $1, terminalToken("-", MINUS), $3); }
           | expr DIV expr { $$ = cria_node("expr", 3, $1, terminalToken("/", DIV), $3); }
@@ -303,18 +303,42 @@ int printParams(tipoTree *p){
 	return 0;
 }
 
+int printExpr(tipoTree *p, int depth){
+
+	int i;
+	if (p == NULL)
+		return 0;
+
+	if(p->tokenNumber == NUMBER || p->tokenNumber == NAME)
+	{
+		printf(" [%s]", p->id);
+		return 1;
+	}
+	else if(p->num_filhos == 3){
+		printf("[%s", p->filhos[1]->id);
+		printExpr(p->filhos[0], depth);
+		printExpr(p->filhos[2], depth);
+		printf("]\n");
+		return 1;
+	}
+
+	for(i = 0; i < p->num_filhos; i++){
+		printExpr(p->filhos[i], depth);
+	}
+	return 0;
+}
+
 int printTree(tipoTree *p, int depth){
 
-	
+
 	int i;
 	if(p == NULL)
 		return 0;
 	if(p->nonTerminal != NULL){
-		
+
 		//print Paramlist
 		if(strcmp(p->nonTerminal, "paramList") == 0)
 		{
-
 			for(i=0; i < depth; i++) printf(" ");
 			printf("[%s", p->nonTerminal);
 			printParams(p);
@@ -322,10 +346,16 @@ int printTree(tipoTree *p, int depth){
 			return 0;
 		}
 
+		//print expr
+		if(strcmp(p->nonTerminal, "expr") == 0){
+			for(i=0; i < depth; i++) printf(" ");
+			printExpr(p, depth);
+			return 0;
+		}
 		for(i=0; i < depth; i++) printf(" ");
 		printf("[%s\n", p->nonTerminal);
 	}
-	
+
 	if(p->num_filhos == 0)
 	{
 		if (p->tokenNumber == INT || p->tokenNumber == VOID || p->tokenNumber == OPENPAR || p->tokenNumber == CLOSEPAR || p->tokenNumber == OPENCH || p->tokenNumber == CLOSECH || p->tokenNumber == SEMICOL)
@@ -341,7 +371,7 @@ int printTree(tipoTree *p, int depth){
 
 			printTree(p->filhos[i], depth+1);
 		}
-		
+
 		for(i=0; i < depth; i++) printf(" ");
 		printf("]\n");
 	}

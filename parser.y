@@ -62,8 +62,8 @@ s       : {$$ = NULL;}
 			}
 		};
 
-program : decVar { $$ = cria_node("program", 1, $1); }
-        | decFunc { $$ = cria_node("program", 1, $1); }
+program : decVar { $$ = $1; }
+        | decFunc { $$ = $1; }
         ;
 
 decVar  : type NAME compVar SEMICOL { $$ = cria_node("decVar", 4, $1, terminalToken($2, NAME), $3, terminalToken(";", SEMICOL)); }
@@ -96,7 +96,7 @@ multStmt : { $$ = NULL; }
          ;
 
 stmt :    NAME ASSIGN expr SEMICOL { $$ = cria_node("stmt", 4, terminalToken($1, NAME), terminalToken("=", ASSIGN), $3, terminalToken(";", SEMICOL)); }
-        | funCall SEMICOL { $$ = cria_node("funcall", 2, $1, terminalToken(";", SEMICOL)); }
+        | funCall SEMICOL { $$ = cria_node("stmt", 2, $1, terminalToken(";", SEMICOL)); }
         | IF OPENPAR expr CLOSEPAR block compElse { $$ = cria_node("stmt", 6, terminalToken("if", IF), terminalToken("(", OPENPAR), $3, terminalToken(")", CLOSEPAR), $5, $6); }
         | WHILE OPENPAR expr CLOSEPAR block { $$ = cria_node("stmt", 5, terminalToken("while", WHILE), terminalToken("(", OPENPAR), $3, terminalToken(")", CLOSEPAR), $5); }
         | RETURN compExpr SEMICOL  { $$ = cria_node("stmt", 3, terminalToken("return", RETURN), $2, terminalToken(";", SEMICOL)); }
@@ -243,6 +243,11 @@ int printExpr(tipoTree *p, int depth){
 		printf("]\n");
 		return 1;
 	}
+	else if(p->num_filhos == 1)
+	{
+		printFuncall(p->filhos[0], depth);
+		return 1;
+	}
 
 	for(i = 0; i < p->num_filhos; i++){
 		printExpr(p->filhos[i], depth);
@@ -264,6 +269,16 @@ int printArglist(tipoTree *p, int depth){
 	for(i = 0; i < p->num_filhos; i++){
 		printArglist(p->filhos[i], depth);
 	}
+	return 0;
+}
+
+int printFuncall(tipoTree *p, int depth){
+
+	printf("[funcall ");
+	printf(" [%s]", p->filhos[0]->id);
+	printf(" [arglist ");
+	printArglist(p->filhos[2], depth);
+	printf("]]");
 	return 0;
 }
 
@@ -300,6 +315,11 @@ int printTree(tipoTree *p, int depth){
 			printf("]\n");
 			return 0;
 		}
+		// print funcall
+		// if(strcmp(p->nonTerminal, "funcall")){
+		// 	for(i=0; i < depth; i++) printf(" ");
+
+		// }
 
 		for(i=0; i < depth; i++) printf(" ");
 		printf("[%s\n", p->nonTerminal);
@@ -307,7 +327,7 @@ int printTree(tipoTree *p, int depth){
 
 	if(p->num_filhos == 0)
 	{
-		if (p->tokenNumber == INT || p->tokenNumber == VOID || p->tokenNumber == OPENPAR || p->tokenNumber == CLOSEPAR || p->tokenNumber == OPENCH || p->tokenNumber == CLOSECH || p->tokenNumber == SEMICOL)
+		if (p->tokenNumber == INT || p->tokenNumber == VOID || p->tokenNumber == DEF || p->tokenNumber == OPENPAR || p->tokenNumber == CLOSEPAR || p->tokenNumber == OPENCH || p->tokenNumber == CLOSECH || p->tokenNumber == SEMICOL)
 			return 1;
 
 		for(i=0; i < depth; i++) printf(" ");

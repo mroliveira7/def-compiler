@@ -1,0 +1,11 @@
+def void main()
+{
+	int a;
+	if (a > 2) {
+		a = 3;
+	}
+	else
+	{
+		a = 1;
+	}
+}

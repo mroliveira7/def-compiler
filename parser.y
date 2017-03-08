@@ -17,6 +17,7 @@ tipoTree * terminalNumber(int token_n);
 tipoTree * terminalToken(char id[20], int token_n);
 char * consultaToken(int token_n);
 void yyerror(char *string);
+int printTree(tipoTree *p, int depth);
 
 
 tipoTree *treeRoot = NULL;
@@ -70,7 +71,7 @@ decVar  : type NAME compVar SEMICOL { $$ = cria_node("decVar", 4, $1, terminalTo
         ;
 
 compVar : {$$ = NULL;}
-        | ASSIGN expr { $$ = cria_node("decVar", 2, terminalToken("=", ASSIGN), $2); }
+        | ASSIGN expr { $$ = cria_node("compVar", 2, terminalToken("=", ASSIGN), $2); }
         ;
 
 decFunc : DEF type NAME OPENPAR paramList CLOSEPAR block { $$ = cria_node("decFunc" , 7, terminalToken("def", DEF), $2, terminalToken($3, NAME), terminalToken("(", OPENPAR), $5, terminalToken(")", CLOSEPAR), $7); }
@@ -282,6 +283,86 @@ int printFuncall(tipoTree *p, int depth){
 	return 0;
 }
 
+int printMultVar(tipoTree *p, int depth){
+
+	int i;
+	if (p == NULL)
+		return 0;
+
+	if(p->nonTerminal != NULL && strcmp(p->nonTerminal, "decVar") == 0){
+
+		printf("[decVar [%s]", p->filhos[1]->id);
+		if(p->filhos[2]){
+			printExpr(p->filhos[2]->filhos[1], depth);
+			printf("]]\n");
+		}
+		else
+			printf("]\n");
+		
+		return 1;
+	}
+
+	for(i = 0; i < p->num_filhos; i++){
+		printMultVar(p->filhos[i], depth);
+	}
+	return 0;
+}
+
+int printMultStmt(tipoTree *p, int depth){
+
+	int i;
+	if (p == NULL)
+		return 0;
+
+// stmt :    NAME ASSIGN expr SEMICOL
+//         | funCall SEMICOL
+//         | IF OPENPAR expr CLOSEPAR block compElse
+//         | WHILE OPENPAR expr CLOSEPAR block
+//         | RETURN compExpr SEMICOL 
+//         | BREAK SEMICOL
+//         | CONTINUE SEMICOL
+//         ;
+
+	if(p->nonTerminal != NULL && strcmp(p->nonTerminal, "stmt") == 0){
+
+		if(p->filhos[0]->tokenNumber == NAME){
+			printf("[assign [%s]", p->filhos[0]->id);
+			printExpr(p->filhos[2], depth);
+			printf("]]\n");
+			return 1;
+		}
+		else if (p->filhos[0]->tokenNumber == IF)
+		{
+			for(i=0; i < depth; i++) printf(" ");
+			printf("[if \n");
+			
+			for(i=0; i < depth+1; i++) printf(" ");
+			printf("[ ");
+			printExpr(p->filhos[2], depth+1);
+			printf("]\n");
+			
+			printTree(p->filhos[4], depth+1);
+			
+			if (p->filhos[5]){
+				for(i=0; i < depth+1; i++) printf(" ");
+				printf("[else \n");
+				printTree(p->filhos[5]->filhos[1], depth+1);
+				for(i=0; i < depth+1; i++) printf(" ");
+				printf("]\n");
+			}
+			printf("]\n");
+
+			return 1;
+		}
+
+	}
+
+	for(i = 0; i < p->num_filhos; i++)
+		printMultStmt(p->filhos[i], depth);
+
+	return 0;
+}
+
 int printTree(tipoTree *p, int depth){
 
 
@@ -315,11 +396,18 @@ int printTree(tipoTree *p, int depth){
 			printf("]\n");
 			return 0;
 		}
-		// print funcall
-		// if(strcmp(p->nonTerminal, "funcall")){
-		// 	for(i=0; i < depth; i++) printf(" ");
-
-		// }
+		// print multVar
+		if(strcmp(p->nonTerminal, "multVar") == 0 || strcmp(p->nonTerminal, "decVar") == 0){
+			for(i=0; i < depth; i++) printf(" ");
+			printMultVar(p, depth);
+			return 0;
+		}
+		// print multstmt
+		if(strcmp(p->nonTerminal, "multStmt") == 0){
+			for(i=0; i < depth; i++) printf(" ");
+			printMultStmt(p, depth);
+			return 0;
+		}
 
 		for(i=0; i < depth; i++) printf(" ");
 		printf("[%s\n", p->nonTerminal);

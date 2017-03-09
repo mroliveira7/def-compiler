@@ -1,0 +1,15 @@
+def void main()
+{
+	int a;
+	while (a > 378463)
+	{
+		a = a + 1;
+		if(a < 2){
+			return 1+1;
+		}
+		else {
+			break;
+		}
+		if(a > 2) { continue; }
+	}
+}

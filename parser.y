@@ -18,6 +18,7 @@ tipoTree * terminalToken(char id[20], int token_n);
 char * consultaToken(int token_n);
 void yyerror(char *string);
 int printTree(tipoTree *p, int depth);
+int printFuncall(tipoTree *p, int depth);
 
 
 tipoTree *treeRoot = NULL;
@@ -392,6 +393,26 @@ int printMultStmt(tipoTree *p, int depth){
 	return 0;
 }
 
+int printDecFunc(tipoTree *p, int depth){
+
+	int i;
+	if(p == NULL)
+		return 0;
+
+	for(i=0; i < depth; i++) printf(" ");
+	printf("[%s]\n", p->filhos[2]->id);
+	
+	if(p->filhos[4] == NULL){
+		for(i=0; i < depth; i++) printf(" ");
+		printf("[paramList]\n");
+	}
+	else{
+		printTree(p->filhos[4], depth);
+	}
+	printTree(p->filhos[6],depth);
+	return 0;
+}
+
 int printTree(tipoTree *p, int depth){
 
 	int i;
@@ -447,9 +468,17 @@ int printTree(tipoTree *p, int depth){
 			printf("]\n");
 			return 0;
 		}
+		if(strcmp(p->nonTerminal, "decFunc") == 0){
+			for(i=0; i < depth; i++) printf(" ");
+			printf("[decFunc \n");
+			printDecFunc(p, depth+1);
+			for(i=0; i < depth; i++) printf(" ");
+			printf("]\n");
+			return 0;
+		}
 
-		for(i=0; i < depth; i++) printf(" ");
-		printf("[%s\n", p->nonTerminal);
+		// for(i=0; i < depth; i++) printf(" ");
+		// printf("[%s\n", p->nonTerminal);
 	}
 
 	if(p->num_filhos == 0)
@@ -481,6 +510,7 @@ int main(int argc, char** argv){
 	else{
 		yyparse();
 	}
+	printf("[program \n");
 	printTree(treeRoot, 0);
 	printf("\n");
 	fclose(yyin);

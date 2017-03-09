@@ -110,7 +110,7 @@ compElse  : { $$ = NULL; }
           ;
 
 compExpr : {$$ = NULL; }
-         | expr  { $$ = cria_node("compexp", 1, $1); }
+         | expr  { $$ = $1; }
          ;
 
 funCall : NAME OPENPAR compArglist CLOSEPAR  { $$ = cria_node("funcall", 4, terminalToken($1, NAME), terminalToken("(", OPENPAR), $3, terminalToken(")", CLOSEPAR)); }
@@ -325,7 +325,8 @@ int printMultStmt(tipoTree *p, int depth){
 
 	if(p->nonTerminal != NULL && strcmp(p->nonTerminal, "stmt") == 0){
 
-		if(p->filhos[0]->tokenNumber == NAME){
+		if(p->filhos[0]->tokenNumber == NAME)
+		{
 			for(i=0; i < depth; i++) printf(" ");
 			printf("[assign [%s]", p->filhos[0]->id);
 			printExpr(p->filhos[2], depth);
@@ -351,8 +352,37 @@ int printMultStmt(tipoTree *p, int depth){
 			}
 			for(i=0; i < depth; i++) printf(" ");
 			printf("]\n");
-
 			return 1;
+		}
+		else if (p->filhos[0]->tokenNumber == WHILE)
+		{
+			for(i=0; i < depth; i++) printf(" ");
+			printf("[while \n");
+
+			for(i=0; i < depth+1; i++) printf(" ");
+			printExpr(p->filhos[2], depth+1);
+			printf("\n");
+			printTree(p->filhos[4], depth+1);
+
+			for(i=0; i < depth; i++) printf(" ");
+			printf("]\n");
+			return 1;
+		}
+		else if (p->filhos[0]->tokenNumber == RETURN)
+		{
+			for(i=0; i < depth; i++) printf(" ");
+			printf("[return ");
+			if(p->filhos[1] != NULL)
+				printExpr(p->filhos[1], depth);
+			printf("]\n");
+		}
+		else if (p->filhos[0]->tokenNumber == BREAK){
+			for(i=0; i < depth; i++) printf(" ");
+			printf("[break]\n");
+		}
+		else if (p->filhos[0]->tokenNumber == CONTINUE){
+			for(i=0; i < depth; i++) printf(" ");
+			printf("[continue]\n");
 		}
 	}
 
@@ -363,7 +393,6 @@ int printMultStmt(tipoTree *p, int depth){
 }
 
 int printTree(tipoTree *p, int depth){
-
 
 	int i;
 	if(p == NULL)
@@ -381,7 +410,7 @@ int printTree(tipoTree *p, int depth){
 		}
 
 		//print expr
-		if(strcmp(p->nonTerminal, "expr") == 0 || strcmp(p->nonTerminal, "compexp") == 0){
+		if(strcmp(p->nonTerminal, "expr") == 0){
 			for(i=0; i < depth; i++) printf(" ");
 			printExpr(p, depth);
 			printf("]\n");

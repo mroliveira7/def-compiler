@@ -193,7 +193,7 @@ tipoTree * terminalToken(char id[20], int token_n){
 	return aux;
 }
 
-void yyerror(char *string){  fprintf(stderr, "%s\n", string); 
+void yyerror(char *string){  fprintf(stderr, "%s\n", string);
 }
 
 int printParams(tipoTree *p){
@@ -224,7 +224,7 @@ int printExpr(tipoTree *p, int depth){
 		return 1;
 	}
 	else if(p->num_filhos == 3){
-		
+
 		if(p->filhos[0]->tokenNumber == OPENPAR)
 		{
 			printExpr(p->filhos[1], depth);
@@ -298,7 +298,7 @@ int printMultVar(tipoTree *p, int depth){
 		}
 		else
 			printf("]\n");
-		
+
 		return 1;
 	}
 
@@ -318,7 +318,7 @@ int printMultStmt(tipoTree *p, int depth){
 //         | funCall SEMICOL
 //         | IF OPENPAR expr CLOSEPAR block compElse
 //         | WHILE OPENPAR expr CLOSEPAR block
-//         | RETURN compExpr SEMICOL 
+//         | RETURN compExpr SEMICOL
 //         | BREAK SEMICOL
 //         | CONTINUE SEMICOL
 //         ;
@@ -326,35 +326,34 @@ int printMultStmt(tipoTree *p, int depth){
 	if(p->nonTerminal != NULL && strcmp(p->nonTerminal, "stmt") == 0){
 
 		if(p->filhos[0]->tokenNumber == NAME){
+			for(i=0; i < depth; i++) printf(" ");
 			printf("[assign [%s]", p->filhos[0]->id);
 			printExpr(p->filhos[2], depth);
-			printf("]]\n");
+			printf("]\n");
 			return 1;
 		}
 		else if (p->filhos[0]->tokenNumber == IF)
 		{
 			for(i=0; i < depth; i++) printf(" ");
 			printf("[if \n");
-			
+
 			for(i=0; i < depth+1; i++) printf(" ");
-			printf("[ ");
 			printExpr(p->filhos[2], depth+1);
-			printf("]\n");
-			
+			printf("\n");
 			printTree(p->filhos[4], depth+1);
-			
+
 			if (p->filhos[5]){
 				for(i=0; i < depth+1; i++) printf(" ");
 				printf("[else \n");
-				printTree(p->filhos[5]->filhos[1], depth+1);
+				printTree(p->filhos[5]->filhos[1], depth+2);
 				for(i=0; i < depth+1; i++) printf(" ");
 				printf("]\n");
 			}
+			for(i=0; i < depth; i++) printf(" ");
 			printf("]\n");
 
 			return 1;
 		}
-
 	}
 
 	for(i = 0; i < p->num_filhos; i++)
@@ -406,6 +405,17 @@ int printTree(tipoTree *p, int depth){
 		if(strcmp(p->nonTerminal, "multStmt") == 0){
 			for(i=0; i < depth; i++) printf(" ");
 			printMultStmt(p, depth);
+			return 0;
+		}
+		if(strcmp(p->nonTerminal, "block") == 0){
+
+			for(i=0; i < depth; i++) printf(" ");
+			printf("[block \n");
+			if (p->filhos[1]) for(i=0; i < depth+1; i++) printf(" ");
+			printMultVar(p->filhos[1], depth+1);
+			printMultStmt(p->filhos[2], depth+1);
+			for(i=0; i < depth; i++) printf(" ");
+			printf("]\n");
 			return 0;
 		}
 

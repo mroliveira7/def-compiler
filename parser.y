@@ -118,7 +118,7 @@ funCall : NAME OPENPAR compArglist CLOSEPAR  { $$ = cria_node("funcall", 4, term
         ;
 
 compArglist : { $$ = NULL; }
-            | arglist  { $$ = cria_node("compArglist", 1, $1); }
+            | arglist  { $$ = $1; }
             ;
 
 arglist     : expr multExpr  { $$ = cria_node("arglist", 2, $1, $2); }
@@ -131,7 +131,7 @@ multExpr  : { $$ = NULL; }
 expr      : NUMBER { $$ = terminalToken($1, NUMBER); }
           | NAME { $$ = terminalToken($1, NAME); }
           | OPENPAR expr CLOSEPAR  { $$ = cria_node("expr", 3, terminalToken("(", OPENPAR), $2, terminalToken(")", CLOSEPAR)); }
-          | funCall  { $$ = cria_node("funcall", 1, $1); }
+          | funCall  { $$ = cria_node("expr", 1, $1); }
           | expr PLUS expr { $$ = cria_node("expr", 3, $1, terminalToken("+", PLUS), $3); }
           | expr MINUS expr  { $$ = cria_node("expr", 3, $1, terminalToken("-", MINUS), $3); }
           | expr DIV expr { $$ = cria_node("expr", 3, $1, terminalToken("/", DIV), $3); }
@@ -194,8 +194,7 @@ tipoTree * terminalToken(char id[20], int token_n){
 	return aux;
 }
 
-void yyerror(char *string){  fprintf(stderr, "%s\n", string);
-}
+void yyerror(char *string){  fprintf(stderr, "%s\n", string);}
 
 int printParams(tipoTree *p){
 
@@ -247,7 +246,7 @@ int printExpr(tipoTree *p, int depth){
 	}
 	else if(p->num_filhos == 1)
 	{
-		printFuncall(p->filhos[0], depth);
+		printFuncall(p->filhos[0], depth+1);
 		return 1;
 	}
 
@@ -263,10 +262,15 @@ int printArglist(tipoTree *p, int depth){
 	if (p == NULL)
 		return 0;
 
-	if( (p->nonTerminal != NULL) && strcmp(p->nonTerminal, "expr") == 0){
+	if((p->nonTerminal != NULL) && strcmp(p->nonTerminal, "expr") == 0){
 		printExpr(p, depth);
 		return 1;
 	}
+	else if(p->tokenNumber == NUMBER || p->tokenNumber == NAME){
+		printf(" [%s]", p->id);
+		return 1;
+	}
+
 
 	for(i = 0; i < p->num_filhos; i++){
 		printArglist(p->filhos[i], depth);
@@ -276,9 +280,9 @@ int printArglist(tipoTree *p, int depth){
 
 int printFuncall(tipoTree *p, int depth){
 
-	printf("[funcall ");
-	printf(" [%s]", p->filhos[0]->id);
-	printf(" [arglist ");
+	int i;
+	printf("[funcall [%s] ", p->filhos[0]->id);
+	printf("[arglist");
 	printArglist(p->filhos[2], depth);
 	printf("]]");
 	return 0;
@@ -314,15 +318,6 @@ int printMultStmt(tipoTree *p, int depth){
 	int i;
 	if (p == NULL)
 		return 0;
-
-// stmt :    NAME ASSIGN expr SEMICOL
-//         | funCall SEMICOL
-//         | IF OPENPAR expr CLOSEPAR block compElse
-//         | WHILE OPENPAR expr CLOSEPAR block
-//         | RETURN compExpr SEMICOL
-//         | BREAK SEMICOL
-//         | CONTINUE SEMICOL
-//         ;
 
 	if(p->nonTerminal != NULL && strcmp(p->nonTerminal, "stmt") == 0){
 
@@ -377,14 +372,21 @@ int printMultStmt(tipoTree *p, int depth){
 				printExpr(p->filhos[1], depth);
 			printf("]\n");
 		}
-		else if (p->filhos[0]->tokenNumber == BREAK){
+		else if (p->filhos[0]->tokenNumber == BREAK)
+		{
 			for(i=0; i < depth; i++) printf(" ");
 			printf("[break]\n");
 		}
-		else if (p->filhos[0]->tokenNumber == CONTINUE){
+		else if (p->filhos[0]->tokenNumber == CONTINUE)
+		{
 			for(i=0; i < depth; i++) printf(" ");
 			printf("[continue]\n");
 		}
+		else{
+			for(i=0; i < depth; i++) printf(" ");
+			printFuncall(p->filhos[0], depth+1);
+		}
+
 	}
 
 	for(i = 0; i < p->num_filhos; i++)
@@ -401,7 +403,7 @@ int printDecFunc(tipoTree *p, int depth){
 
 	for(i=0; i < depth; i++) printf(" ");
 	printf("[%s]\n", p->filhos[2]->id);
-	
+
 	if(p->filhos[4] == NULL){
 		for(i=0; i < depth; i++) printf(" ");
 		printf("[paramList]\n");
@@ -443,6 +445,7 @@ int printTree(tipoTree *p, int depth){
 			printf("[arglist ");
 			printArglist(p, depth);
 			printf("]\n");
+			printf("PODE REMOVER NAO!\n");
 			return 0;
 		}
 		// print multVar
@@ -495,9 +498,6 @@ int printTree(tipoTree *p, int depth){
 		for(i = 0; i < p->num_filhos; i++){
 			printTree(p->filhos[i], depth+1);
 		}
-
-		for(i=0; i < depth; i++) printf(" ");
-		printf("]\n");
 	}
 }
 
@@ -512,7 +512,7 @@ int main(int argc, char** argv){
 	}
 	printf("[program \n");
 	printTree(treeRoot, 0);
-	printf("\n");
+	printf("]\n");
 	fclose(yyin);
 	fclose(yyout);
 

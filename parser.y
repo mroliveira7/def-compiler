@@ -203,7 +203,7 @@ int printParams(tipoTree *p){
 		return 0;
 
 	if(p->tokenNumber == NAME){
-		printf(" [%s]", p->id);
+		fprintf(yyout, " [%s]", p->id);
 	}
 
 	for(i = 0; i < p->num_filhos; i++){
@@ -220,7 +220,7 @@ int printExpr(tipoTree *p, int depth){
 
 	if(p->tokenNumber == NUMBER || p->tokenNumber == NAME)
 	{
-		printf(" [%s]", p->id);
+		fprintf(yyout, " [%s]", p->id);
 		return 1;
 	}
 	else if(p->num_filhos == 3){
@@ -231,17 +231,17 @@ int printExpr(tipoTree *p, int depth){
 			return 1;
 		}
 		else{
-			printf("[%s", p->filhos[1]->id);
+			fprintf(yyout, "[%s", p->filhos[1]->id);
 			printExpr(p->filhos[0], depth);
 			printExpr(p->filhos[2], depth);
-			printf("]");
+			fprintf(yyout, "]");
 			return 1;
 		}
 	}
 	else if(p->num_filhos == 2){
-		printf("[%s", p->filhos[0]->id);
+		fprintf(yyout, "[%s", p->filhos[0]->id);
 		printExpr(p->filhos[1], depth);
-		printf("]\n");
+		fprintf(yyout, "]\n");
 		return 1;
 	}
 	else if(p->num_filhos == 1)
@@ -267,7 +267,7 @@ int printArglist(tipoTree *p, int depth){
 		return 1;
 	}
 	else if(p->tokenNumber == NUMBER || p->tokenNumber == NAME){
-		printf(" [%s]", p->id);
+		fprintf(yyout, " [%s]", p->id);
 		return 1;
 	}
 
@@ -281,10 +281,10 @@ int printArglist(tipoTree *p, int depth){
 int printFuncall(tipoTree *p, int depth){
 
 	int i;
-	printf("[funcall [%s] ", p->filhos[0]->id);
-	printf("[arglist");
+	fprintf(yyout, "[funcall [%s] ", p->filhos[0]->id);
+	fprintf(yyout, "[arglist");
 	printArglist(p->filhos[2], depth);
-	printf("]]");
+	fprintf(yyout, "]]");
 	return 0;
 }
 
@@ -296,13 +296,13 @@ int printMultVar(tipoTree *p, int depth){
 
 	if(p->nonTerminal != NULL && strcmp(p->nonTerminal, "decVar") == 0){
 
-		printf("[decVar [%s]", p->filhos[1]->id);
+		fprintf(yyout, "[decVar [%s]", p->filhos[1]->id);
 		if(p->filhos[2]){
 			printExpr(p->filhos[2]->filhos[1], depth);
-			printf("]]\n");
+			fprintf(yyout, "]]\n");
 		}
 		else
-			printf("]\n");
+			fprintf(yyout, "]\n");
 
 		return 1;
 	}
@@ -323,67 +323,67 @@ int printMultStmt(tipoTree *p, int depth){
 
 		if(p->filhos[0]->tokenNumber == NAME)
 		{
-			for(i=0; i < depth; i++) printf(" ");
-			printf("[assign [%s]", p->filhos[0]->id);
+			for(i=0; i < depth; i++) fprintf(yyout, " ");
+			fprintf(yyout, "[assign [%s]", p->filhos[0]->id);
 			printExpr(p->filhos[2], depth);
-			printf("]\n");
+			fprintf(yyout, "]\n");
 			return 1;
 		}
 		else if (p->filhos[0]->tokenNumber == IF)
 		{
-			for(i=0; i < depth; i++) printf(" ");
-			printf("[if \n");
+			for(i=0; i < depth; i++) fprintf(yyout, " ");
+			fprintf(yyout, "[if \n");
 
-			for(i=0; i < depth+1; i++) printf(" ");
+			for(i=0; i < depth+1; i++) fprintf(yyout, " ");
 			printExpr(p->filhos[2], depth+1);
-			printf("\n");
+			fprintf(yyout, "\n");
 			printTree(p->filhos[4], depth+1);
 
 			if (p->filhos[5]){
-				for(i=0; i < depth+1; i++) printf(" ");
-				printf("[else \n");
+				for(i=0; i < depth+1; i++) fprintf(yyout, " ");
+				fprintf(yyout, "[else \n");
 				printTree(p->filhos[5]->filhos[1], depth+2);
-				for(i=0; i < depth+1; i++) printf(" ");
-				printf("]\n");
+				for(i=0; i < depth+1; i++) fprintf(yyout, " ");
+				fprintf(yyout, "]\n");
 			}
-			for(i=0; i < depth; i++) printf(" ");
-			printf("]\n");
+			for(i=0; i < depth; i++) fprintf(yyout, " ");
+			fprintf(yyout, "]\n");
 			return 1;
 		}
 		else if (p->filhos[0]->tokenNumber == WHILE)
 		{
-			for(i=0; i < depth; i++) printf(" ");
-			printf("[while \n");
+			for(i=0; i < depth; i++) fprintf(yyout, " ");
+			fprintf(yyout, "[while \n");
 
-			for(i=0; i < depth+1; i++) printf(" ");
+			for(i=0; i < depth+1; i++) fprintf(yyout, " ");
 			printExpr(p->filhos[2], depth+1);
-			printf("\n");
+			fprintf(yyout, "\n");
 			printTree(p->filhos[4], depth+1);
 
-			for(i=0; i < depth; i++) printf(" ");
-			printf("]\n");
+			for(i=0; i < depth; i++) fprintf(yyout, " ");
+			fprintf(yyout, "]\n");
 			return 1;
 		}
 		else if (p->filhos[0]->tokenNumber == RETURN)
 		{
-			for(i=0; i < depth; i++) printf(" ");
-			printf("[return ");
+			for(i=0; i < depth; i++) fprintf(yyout, " ");
+			fprintf(yyout, "[return ");
 			if(p->filhos[1] != NULL)
 				printExpr(p->filhos[1], depth);
-			printf("]\n");
+			fprintf(yyout, "]\n");
 		}
 		else if (p->filhos[0]->tokenNumber == BREAK)
 		{
-			for(i=0; i < depth; i++) printf(" ");
-			printf("[break]\n");
+			for(i=0; i < depth; i++) fprintf(yyout, " ");
+			fprintf(yyout, "[break]\n");
 		}
 		else if (p->filhos[0]->tokenNumber == CONTINUE)
 		{
-			for(i=0; i < depth; i++) printf(" ");
-			printf("[continue]\n");
+			for(i=0; i < depth; i++) fprintf(yyout, " ");
+			fprintf(yyout, "[continue]\n");
 		}
 		else{
-			for(i=0; i < depth; i++) printf(" ");
+			for(i=0; i < depth; i++) fprintf(yyout, " ");
 			printFuncall(p->filhos[0], depth+1);
 		}
 
@@ -401,12 +401,12 @@ int printDecFunc(tipoTree *p, int depth){
 	if(p == NULL)
 		return 0;
 
-	for(i=0; i < depth; i++) printf(" ");
-	printf("[%s]\n", p->filhos[2]->id);
+	for(i=0; i < depth; i++) fprintf(yyout, " ");
+	fprintf(yyout, "[%s]\n", p->filhos[2]->id);
 
 	if(p->filhos[4] == NULL){
-		for(i=0; i < depth; i++) printf(" ");
-		printf("[paramList]\n");
+		for(i=0; i < depth; i++) fprintf(yyout, " ");
+		fprintf(yyout, "[paramList]\n");
 	}
 	else{
 		printTree(p->filhos[4], depth);
@@ -425,63 +425,60 @@ int printTree(tipoTree *p, int depth){
 		//print Paramlist
 		if(strcmp(p->nonTerminal, "paramList") == 0)
 		{
-			for(i=0; i < depth; i++) printf(" ");
-			printf("[%s", p->nonTerminal);
+			for(i=0; i < depth; i++) fprintf(yyout, " ");
+			fprintf(yyout, "[%s", p->nonTerminal);
 			printParams(p);
-			printf("]\n");
+			fprintf(yyout, "]\n");
 			return 0;
 		}
 
 		//print expr
 		if(strcmp(p->nonTerminal, "expr") == 0){
-			for(i=0; i < depth; i++) printf(" ");
+			for(i=0; i < depth; i++) fprintf(yyout, " ");
 			printExpr(p, depth);
-			printf("]\n");
+			fprintf(yyout, "]\n");
 			return 0;
 		}
 		// print Arglist
 		if(strcmp(p->nonTerminal, "compArglist") == 0){
-			for(i=0; i < depth; i++) printf(" ");
-			printf("[arglist ");
+			for(i=0; i < depth; i++) fprintf(yyout, " ");
+			fprintf(yyout, "[arglist ");
 			printArglist(p, depth);
-			printf("]\n");
-			printf("PODE REMOVER NAO!\n");
+			fprintf(yyout, "]\n");
 			return 0;
 		}
 		// print multVar
 		if(strcmp(p->nonTerminal, "multVar") == 0 || strcmp(p->nonTerminal, "decVar") == 0){
-			for(i=0; i < depth; i++) printf(" ");
+			for(i=0; i < depth; i++) fprintf(yyout, " ");
 			printMultVar(p, depth);
 			return 0;
 		}
 		// print multstmt
 		if(strcmp(p->nonTerminal, "multStmt") == 0){
-			for(i=0; i < depth; i++) printf(" ");
+			for(i=0; i < depth; i++) fprintf(yyout, " ");
 			printMultStmt(p, depth);
 			return 0;
 		}
 		if(strcmp(p->nonTerminal, "block") == 0){
 
-			for(i=0; i < depth; i++) printf(" ");
-			printf("[block \n");
-			if (p->filhos[1]) for(i=0; i < depth+1; i++) printf(" ");
+			for(i=0; i < depth; i++) fprintf(yyout, " ");
+			fprintf(yyout, "[block \n");
+			if (p->filhos[1]) for(i=0; i < depth+1; i++) fprintf(yyout, " ");
 			printMultVar(p->filhos[1], depth+1);
 			printMultStmt(p->filhos[2], depth+1);
-			for(i=0; i < depth; i++) printf(" ");
-			printf("]\n");
+			for(i=0; i < depth; i++) fprintf(yyout, " ");
+			fprintf(yyout, "]\n");
 			return 0;
 		}
 		if(strcmp(p->nonTerminal, "decFunc") == 0){
-			for(i=0; i < depth; i++) printf(" ");
-			printf("[decFunc \n");
+			for(i=0; i < depth; i++) fprintf(yyout, " ");
+			fprintf(yyout, "[decFunc \n");
 			printDecFunc(p, depth+1);
-			for(i=0; i < depth; i++) printf(" ");
-			printf("]\n");
+			for(i=0; i < depth; i++) fprintf(yyout, " ");
+			fprintf(yyout, "]\n");
 			return 0;
 		}
 
-		// for(i=0; i < depth; i++) printf(" ");
-		// printf("[%s\n", p->nonTerminal);
 	}
 
 	if(p->num_filhos == 0)
@@ -489,8 +486,8 @@ int printTree(tipoTree *p, int depth){
 		if (p->tokenNumber == INT || p->tokenNumber == VOID || p->tokenNumber == DEF || p->tokenNumber == OPENPAR || p->tokenNumber == CLOSEPAR || p->tokenNumber == OPENCH || p->tokenNumber == CLOSECH || p->tokenNumber == SEMICOL)
 			return 1;
 
-		for(i=0; i < depth; i++) printf(" ");
-		printf("[%s]\n", p->id);
+		for(i=0; i < depth; i++) fprintf(yyout, " ");
+		fprintf(yyout, "[%s]\n", p->id);
 		return 1;
 	}
 	else
@@ -506,13 +503,13 @@ int main(int argc, char** argv){
 	yyin = fopen(argv[1], "r");
 	yyout = fopen(argv[2], "w");
 
-	if(!yyin) printf("Arquivo nao pode ser aberto!\n");
+	if(!yyin) fprintf(yyout, "Arquivo nao pode ser aberto!\n");
 	else{
 		yyparse();
 	}
-	printf("[program \n");
+	fprintf(yyout, "[program \n");
 	printTree(treeRoot, 0);
-	printf("]\n");
+	fprintf(yyout, "]\n");
 	fclose(yyin);
 	fclose(yyout);
 

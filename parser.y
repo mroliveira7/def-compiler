@@ -39,17 +39,20 @@ tipoTree *treeRoot = NULL;
 %token NEQ LTEQ GTEQ LT GT
 %token CLOSEPAR OPENPAR OPENCOLC CLOSECOLC
 %token OPENCH CLOSECH
+%token U_MINUS
 
 %token <id> NAME
 %token <id> NUMBER
 
-%left AND
 %left OR
-%left LT GT LTEQ GTEQ EQ NEQ
-%left OPENPAR CLOSEPAR
+%left AND
+%left EQ NEQ
+%left LT GT LTEQ GTEQ
 %left PLUS MINUS
 %left TIMES DIV
 %right NOT
+%right U_MINUS
+%left OPENPAR CLOSEPAR
 
 %type <treePointer> s program decVar decFunc  type compVar arglist multExpr compArglist expr paramList block rcsParamList multVar stmt multStmt funCall compElse compExpr
 
@@ -136,15 +139,16 @@ expr      : NUMBER { $$ = terminalToken($1, NUMBER); }
           | expr MINUS expr  { $$ = cria_node("expr", 3, $1, terminalToken("-", MINUS), $3); }
           | expr DIV expr { $$ = cria_node("expr", 3, $1, terminalToken("/", DIV), $3); }
           | expr TIMES expr { $$ = cria_node("expr", 3, $1, terminalToken("*", TIMES), $3); }
-          | expr OR expr { $$ = cria_node("expr", 3, $1, terminalToken("or", OR), $3); }
-          | expr AND expr { $$ = cria_node("expr", 3, $1, terminalToken("and", AND), $3); }
+          | expr OR expr { $$ = cria_node("expr", 3, $1, terminalToken("||", OR), $3); }
+          | expr AND expr { $$ = cria_node("expr", 3, $1, terminalToken("&&", AND), $3); }
           | expr LT expr { $$ = cria_node("expr", 3, $1, terminalToken("<", LT), $3); }
           | expr LTEQ expr { $$ = cria_node("expr", 3, $1, terminalToken("<=", LTEQ), $3); }
           | expr GT expr { $$ = cria_node("expr", 3, $1, terminalToken(">", GT), $3); }
           | expr GTEQ expr { $$ = cria_node("expr", 3, $1, terminalToken(">=", GTEQ), $3); }
-          | expr NEQ expr { $$ = cria_node("expr", 3, $1, terminalToken("<>", NEQ), $3); }
+          | expr NEQ expr { $$ = cria_node("expr", 3, $1, terminalToken("!=", NEQ), $3); }
+		  | expr EQ expr { $$ = cria_node("expr", 3, $1, terminalToken("==", EQ), $3); }
           | NOT expr { $$ = cria_node("expr", 2, terminalToken("!", NOT), $2); }
-          | MINUS expr { $$ = cria_node("expr", 2, terminalToken("-", MINUS), $2); }
+          | MINUS expr %prec U_MINUS { $$ = cria_node("expr", 2, terminalToken("-", MINUS), $2); }
           ;
 
 type      : INT { $$ = terminalToken("int", INT); }
@@ -241,7 +245,7 @@ int printExpr(tipoTree *p, int depth){
 	else if(p->num_filhos == 2){
 		fprintf(yyout, "[%s", p->filhos[0]->id);
 		printExpr(p->filhos[1], depth);
-		fprintf(yyout, "]\n");
+		fprintf(yyout, "]");
 		return 1;
 	}
 	else if(p->num_filhos == 1)
@@ -281,7 +285,7 @@ int printArglist(tipoTree *p, int depth){
 int printFuncall(tipoTree *p, int depth){
 
 	int i;
-	fprintf(yyout, "[funcall [%s] ", p->filhos[0]->id);
+	fprintf(yyout, "[funccall [%s] ", p->filhos[0]->id);
 	fprintf(yyout, "[arglist");
 	printArglist(p->filhos[2], depth);
 	fprintf(yyout, "]]");
@@ -296,13 +300,13 @@ int printMultVar(tipoTree *p, int depth){
 
 	if(p->nonTerminal != NULL && strcmp(p->nonTerminal, "decVar") == 0){
 
-		fprintf(yyout, "[decVar [%s]", p->filhos[1]->id);
+		fprintf(yyout, "[decvar [%s]", p->filhos[1]->id);
 		if(p->filhos[2]){
 			printExpr(p->filhos[2]->filhos[1], depth);
-			fprintf(yyout, "]]\n");
+			fprintf(yyout, "]");
 		}
 		else
-			fprintf(yyout, "]\n");
+			fprintf(yyout, "]");
 
 		return 1;
 	}
@@ -323,67 +327,48 @@ int printMultStmt(tipoTree *p, int depth){
 
 		if(p->filhos[0]->tokenNumber == NAME)
 		{
-			for(i=0; i < depth; i++) fprintf(yyout, " ");
 			fprintf(yyout, "[assign [%s]", p->filhos[0]->id);
 			printExpr(p->filhos[2], depth);
-			fprintf(yyout, "]\n");
+			fprintf(yyout, "]");
 			return 1;
 		}
 		else if (p->filhos[0]->tokenNumber == IF)
 		{
-			for(i=0; i < depth; i++) fprintf(yyout, " ");
-			fprintf(yyout, "[if \n");
+			fprintf(yyout, "[if");
 
-			for(i=0; i < depth+1; i++) fprintf(yyout, " ");
 			printExpr(p->filhos[2], depth+1);
-			fprintf(yyout, "\n");
 			printTree(p->filhos[4], depth+1);
 
 			if (p->filhos[5]){
-				for(i=0; i < depth+1; i++) fprintf(yyout, " ");
-				fprintf(yyout, "[else \n");
 				printTree(p->filhos[5]->filhos[1], depth+2);
-				for(i=0; i < depth+1; i++) fprintf(yyout, " ");
-				fprintf(yyout, "]\n");
 			}
-			for(i=0; i < depth; i++) fprintf(yyout, " ");
-			fprintf(yyout, "]\n");
+			fprintf(yyout, "]");
 			return 1;
 		}
 		else if (p->filhos[0]->tokenNumber == WHILE)
 		{
-			for(i=0; i < depth; i++) fprintf(yyout, " ");
-			fprintf(yyout, "[while \n");
-
-			for(i=0; i < depth+1; i++) fprintf(yyout, " ");
+			fprintf(yyout, "[while ");
 			printExpr(p->filhos[2], depth+1);
-			fprintf(yyout, "\n");
 			printTree(p->filhos[4], depth+1);
-
-			for(i=0; i < depth; i++) fprintf(yyout, " ");
-			fprintf(yyout, "]\n");
+			fprintf(yyout, "]");
 			return 1;
 		}
 		else if (p->filhos[0]->tokenNumber == RETURN)
 		{
-			for(i=0; i < depth; i++) fprintf(yyout, " ");
 			fprintf(yyout, "[return ");
 			if(p->filhos[1] != NULL)
 				printExpr(p->filhos[1], depth);
-			fprintf(yyout, "]\n");
+			fprintf(yyout, "]");
 		}
 		else if (p->filhos[0]->tokenNumber == BREAK)
 		{
-			for(i=0; i < depth; i++) fprintf(yyout, " ");
-			fprintf(yyout, "[break]\n");
+			fprintf(yyout, "[break]");
 		}
 		else if (p->filhos[0]->tokenNumber == CONTINUE)
 		{
-			for(i=0; i < depth; i++) fprintf(yyout, " ");
-			fprintf(yyout, "[continue]\n");
+			fprintf(yyout, "[continue]");
 		}
 		else{
-			for(i=0; i < depth; i++) fprintf(yyout, " ");
 			printFuncall(p->filhos[0], depth+1);
 		}
 
@@ -401,12 +386,10 @@ int printDecFunc(tipoTree *p, int depth){
 	if(p == NULL)
 		return 0;
 
-	for(i=0; i < depth; i++) fprintf(yyout, " ");
-	fprintf(yyout, "[%s]\n", p->filhos[2]->id);
+	fprintf(yyout, "[%s]", p->filhos[2]->id);
 
 	if(p->filhos[4] == NULL){
-		for(i=0; i < depth; i++) fprintf(yyout, " ");
-		fprintf(yyout, "[paramList]\n");
+		fprintf(yyout, "[paramlist]");
 	}
 	else{
 		printTree(p->filhos[4], depth);
@@ -425,57 +408,47 @@ int printTree(tipoTree *p, int depth){
 		//print Paramlist
 		if(strcmp(p->nonTerminal, "paramList") == 0)
 		{
-			for(i=0; i < depth; i++) fprintf(yyout, " ");
-			fprintf(yyout, "[%s", p->nonTerminal);
+			fprintf(yyout, "[paramlist");
 			printParams(p);
-			fprintf(yyout, "]\n");
+			fprintf(yyout, "]");
 			return 0;
 		}
 
 		//print expr
 		if(strcmp(p->nonTerminal, "expr") == 0){
-			for(i=0; i < depth; i++) fprintf(yyout, " ");
 			printExpr(p, depth);
-			fprintf(yyout, "]\n");
+			fprintf(yyout, "]");
 			return 0;
 		}
 		// print Arglist
 		if(strcmp(p->nonTerminal, "compArglist") == 0){
-			for(i=0; i < depth; i++) fprintf(yyout, " ");
 			fprintf(yyout, "[arglist ");
 			printArglist(p, depth);
-			fprintf(yyout, "]\n");
+			fprintf(yyout, "]");
 			return 0;
 		}
 		// print multVar
 		if(strcmp(p->nonTerminal, "multVar") == 0 || strcmp(p->nonTerminal, "decVar") == 0){
-			for(i=0; i < depth; i++) fprintf(yyout, " ");
 			printMultVar(p, depth);
 			return 0;
 		}
 		// print multstmt
 		if(strcmp(p->nonTerminal, "multStmt") == 0){
-			for(i=0; i < depth; i++) fprintf(yyout, " ");
 			printMultStmt(p, depth);
 			return 0;
 		}
 		if(strcmp(p->nonTerminal, "block") == 0){
 
-			for(i=0; i < depth; i++) fprintf(yyout, " ");
-			fprintf(yyout, "[block \n");
-			if (p->filhos[1]) for(i=0; i < depth+1; i++) fprintf(yyout, " ");
+			fprintf(yyout, "[block ");
 			printMultVar(p->filhos[1], depth+1);
 			printMultStmt(p->filhos[2], depth+1);
-			for(i=0; i < depth; i++) fprintf(yyout, " ");
-			fprintf(yyout, "]\n");
+			fprintf(yyout, "]");
 			return 0;
 		}
 		if(strcmp(p->nonTerminal, "decFunc") == 0){
-			for(i=0; i < depth; i++) fprintf(yyout, " ");
-			fprintf(yyout, "[decFunc \n");
+			fprintf(yyout, "[decfunc ");
 			printDecFunc(p, depth+1);
-			for(i=0; i < depth; i++) fprintf(yyout, " ");
-			fprintf(yyout, "]\n");
+			fprintf(yyout, "]");
 			return 0;
 		}
 
@@ -486,8 +459,8 @@ int printTree(tipoTree *p, int depth){
 		if (p->tokenNumber == INT || p->tokenNumber == VOID || p->tokenNumber == DEF || p->tokenNumber == OPENPAR || p->tokenNumber == CLOSEPAR || p->tokenNumber == OPENCH || p->tokenNumber == CLOSECH || p->tokenNumber == SEMICOL)
 			return 1;
 
-		for(i=0; i < depth; i++) fprintf(yyout, " ");
-		fprintf(yyout, "[%s]\n", p->id);
+		fprintf(yyout,"fez bosta\n");
+		fprintf(yyout, "[%s]", p->id);
 		return 1;
 	}
 	else
@@ -507,7 +480,7 @@ int main(int argc, char** argv){
 	else{
 		yyparse();
 	}
-	fprintf(yyout, "[program \n");
+	fprintf(yyout, "[program ");
 	printTree(treeRoot, 0);
 	fprintf(yyout, "]\n");
 	fclose(yyin);

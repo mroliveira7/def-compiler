@@ -21,7 +21,18 @@ int printTree(tipoTree *p, int depth);
 int printFuncall(tipoTree *p, int depth);
 
 
+int insereVar(listaVar **p, char *id, int value);
+listaVar * consultaVar(listaVar *p, char *id);
+int consultaFuncs(listaFuncs *p, char *id);
+int insereFunc(listaFuncs **p, char *id);
+int assignValues(tipoTree *p);
+
+
 tipoTree *treeRoot = NULL;
+listaVar *vars = NULL;
+listaFuncs *funcs = NULL;
+int G_NUM = 1;
+int G_ACC = 0;
 
 %}
 
@@ -471,6 +482,99 @@ int printTree(tipoTree *p, int depth){
 	}
 }
 
+
+int insereVar(listaVar **p, char *id, int value){
+
+	listaVar *aux = malloc(sizeof(struct listaV));
+	strcpy(aux->varName, id);
+	aux->varValue = value;
+	aux->prox = *p;
+	*p = aux;
+}
+
+listaVar * consultaVar(listaVar *p, char *id){
+
+	listaVar *aux;
+	for(aux = p; aux != NULL; aux = aux->prox){
+		if( strcmp(aux->varName,id) == 0){
+			return aux;
+		}
+	}
+	return NULL;
+}
+
+int consultaFuncs(listaFuncs *p, char *id){
+
+	listaFuncs *aux;
+	for(aux = p; aux != NULL; aux = aux->prox){
+		if( strcmp(aux->fname,id) == 0 ){
+			return 1;
+		}
+	}
+	return 0;
+}
+
+int insereFunc(listaFuncs **p, char *id){
+
+	listaFuncs *aux = malloc(sizeof(struct listaF));
+	strcpy(aux->fname, id);
+	aux->prox = *p;
+	*p = aux;
+}
+
+int updateVar(listaVar *p, char *id, int newValue){
+
+	listaVar *aux = consultaVar(p, id);
+	// printf("foi?\n");
+	if (aux != NULL)
+		aux->varValue = newValue;
+	else
+		return -1;
+	return 1;
+}
+
+
+int trataFuncs(tipoTree *p){
+
+	if(p == NULL)
+		return 0;
+
+	if( strcmp(p->nonTerminal,"comando") == 0){
+		if(p->filhos[0]->id != NULL)
+		{
+			if( strcmp(p->filhos[0]->id, "function")){
+				if(!consultaFuncs(funcs, p->filhos[1]->id))
+					insereFunc(&funcs, p->filhos[1]->id);
+			}
+		}
+	}
+	else
+	{
+		int i;
+		for(i = 0; i < p->num_filhos; i++)
+			trataFuncs(p->filhos[i]);
+	}
+}
+
+int trataVars(tipoTree *p){
+
+	if(p == NULL)
+		return 0;
+	if(p->num_filhos == 0)
+	{
+		if ((p->tokenNumber == NAME) && (consultaVar(vars, p->id) == NULL) && !(consultaFuncs(funcs,p->id))){
+			insereVar(&vars, p->id, 0);
+			fprintf(yyout, "%s: .word 0\n", p->id);
+		}
+	}
+	else
+	{
+		int i;
+		for(i = 0; i < p->num_filhos; i++)
+			trataVars(p->filhos[i]);
+	}
+}
+
 int main(int argc, char** argv){
 
 	yyin = fopen(argv[1], "r");
@@ -480,9 +584,33 @@ int main(int argc, char** argv){
 	else{
 		yyparse();
 	}
-	fprintf(yyout, "[program ");
-	printTree(treeRoot, 0);
-	fprintf(yyout, "]\n");
+	// Incialização do ambiente
+	// printTree(treeRoot, 0);
+	insereFunc(&funcs, "print");
+	trataFuncs(treeRoot);
+	printf("chegou\n");
+
+	//Inicializacao MIPS
+	fprintf(yyout, "\n.data\n");
+	trataVars(treeRoot);
+	fprintf(yyout, "\n");
+	fprintf(yyout, "_newline: .asciiz \"\\n\"\n");
+	fprintf(yyout,".text\n");
+	fprintf(yyout,".globl main\n\n");
+	fprintf(yyout,"main:\n");
+
+	//Chamar função que gera código aqui
+
+
+	fprintf(yyout, "li $v0, 4\n");
+	fprintf(yyout, "la $a0, _newline\n");
+	fprintf(yyout, "syscall\n");
+
+	fprintf(yyout, "\nli $v0, 10\n");
+	fprintf(yyout, "syscall");
+	fprintf(yyout,"\n");
+
+
 	fclose(yyin);
 	fclose(yyout);
 

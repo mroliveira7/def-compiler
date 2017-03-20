@@ -7,5 +7,5 @@ def int main()
 {
   int a;
   a = 3;
-  print(add(a, 2));
+  return add(a, 2);
 }

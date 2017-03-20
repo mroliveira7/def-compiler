@@ -847,7 +847,7 @@ case 2:
 YY_RULE_SETUP
 #line 19 "scanner.l"
 {
-						printf("SYM  \"%c%c\"\n", 38, 38);
+						// printf("SYM  \"%c%c\"\n", 38, 38);
 						return AND;
 					}
 	YY_BREAK
@@ -855,7 +855,7 @@ case 3:
 YY_RULE_SETUP
 #line 23 "scanner.l"
 {
-						printf("SYM  \"%c\"\n", 33);
+						// printf("SYM  \"%c\"\n", 33);
 						return NOT;
 					}
 	YY_BREAK
@@ -863,7 +863,7 @@ case 4:
 YY_RULE_SETUP
 #line 27 "scanner.l"
 {
-						printf("SYM  \"%c%c\"\n", 124, 124);
+						// printf("SYM  \"%c%c\"\n", 124, 124);
 						return OR;
 					}
 	YY_BREAK
@@ -871,7 +871,7 @@ case 5:
 YY_RULE_SETUP
 #line 31 "scanner.l"
 {
-						printf("KEY  \"while\"\n");
+						// printf("KEY  \"while\"\n");
 						return WHILE;
 					}
 	YY_BREAK
@@ -879,7 +879,7 @@ case 6:
 YY_RULE_SETUP
 #line 35 "scanner.l"
 {
-						printf("KEY  \"else\"\n");
+						// printf("KEY  \"else\"\n");
 						return ELSE;
 					}
 	YY_BREAK
@@ -887,7 +887,7 @@ case 7:
 YY_RULE_SETUP
 #line 39 "scanner.l"
 {
-						printf("KEY  \"if\"\n");
+						// printf("KEY  \"if\"\n");
 						return IF;
 					}
 	YY_BREAK
@@ -895,7 +895,7 @@ case 8:
 YY_RULE_SETUP
 #line 43 "scanner.l"
 {
-						printf("KEY  \"return\"\n");
+						// printf("KEY  \"return\"\n");
 						return RETURN;
 					}
 	YY_BREAK
@@ -903,7 +903,7 @@ case 9:
 YY_RULE_SETUP
 #line 47 "scanner.l"
 {
-						printf("KEY  \"void\"\n");
+						// printf("KEY  \"void\"\n");
 						return VOID;
 					}
 	YY_BREAK
@@ -911,7 +911,7 @@ case 10:
 YY_RULE_SETUP
 #line 51 "scanner.l"
 {
-						printf("KEY  \"def\"\n");
+						// printf("KEY  \"def\"\n");
 						return DEF;
 					}
 	YY_BREAK
@@ -919,7 +919,7 @@ case 11:
 YY_RULE_SETUP
 #line 55 "scanner.l"
 {
-						printf("KEY  \"break\"\n");
+						// printf("KEY  \"break\"\n");
 						return BREAK;
 					}
 	YY_BREAK
@@ -927,7 +927,7 @@ case 12:
 YY_RULE_SETUP
 #line 59 "scanner.l"
 {
-						printf("KEY  \"continue\"\n");
+						// printf("KEY  \"continue\"\n");
 						return CONTINUE;
 					}
 	YY_BREAK
@@ -935,7 +935,7 @@ case 13:
 YY_RULE_SETUP
 #line 63 "scanner.l"
 {
-						printf("KEY  \"int\"\n");
+						// printf("KEY  \"int\"\n");
 						return INT;
 					}
 	YY_BREAK
@@ -943,8 +943,8 @@ case 14:
 YY_RULE_SETUP
 #line 68 "scanner.l"
 {
-						printf("ID   \"%s\"\n", yytext);
-						// strcpy(yylval.id, yytext);
+						// printf("ID   \"%s\"\n", yytext);
+						strcpy(yylval.id, yytext);
 						return NAME;
 					}
 	YY_BREAK
@@ -952,176 +952,177 @@ case 15:
 YY_RULE_SETUP
 #line 73 "scanner.l"
 {
-						printf("DEC  \"%s\"\n", yytext);
+						// printf("DEC  \"%s\"\n", yytext);
+						strcpy(yylval.id, yytext);
 						return NUMBER;
 					}
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 77 "scanner.l"
+#line 78 "scanner.l"
 {
-						printf("SYM  \"%c\"\n", 43);
+						// printf("SYM  \"%c\"\n", 43);
 						return PLUS;
 					}
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 81 "scanner.l"
+#line 82 "scanner.l"
 {
-						printf("SYM  \"%c\"\n", 45);
+						// printf("SYM  \"%c\"\n", 45);
 						return MINUS;
 					}
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 85 "scanner.l"
+#line 86 "scanner.l"
 {
-						printf("SYM  \"%c\"\n", 42);
+						// printf("SYM  \"%c\"\n", 42);
 						return TIMES;
 					}
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 89 "scanner.l"
+#line 90 "scanner.l"
 {
-						printf("SYM  \"%c\"\n", 47);
+						// printf("SYM  \"%c\"\n", 47);
 						return DIV;
 					}
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 93 "scanner.l"
+#line 94 "scanner.l"
 {
-						printf("SYM  \"%c\"\n", 44);
+						// printf("SYM  \"%c\"\n", 44);
 						return COMMA;
 					}
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 97 "scanner.l"
+#line 98 "scanner.l"
 {
-						printf("SYM  \"%c\"\n", 59);
+						// printf("SYM  \"%c\"\n", 59);
 						return SEMICOL;
 					}
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 101 "scanner.l"
+#line 102 "scanner.l"
 {
-						printf("SYM  \"%c\"\n", 61);
+						// printf("SYM  \"%c\"\n", 61);
 						return ASSIGN;
 					}
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 105 "scanner.l"
+#line 106 "scanner.l"
 {
-						printf("SYM  \"%c%c\"\n", 61, 61);
+						// printf("SYM  \"%c%c\"\n", 61, 61);
 						return EQ;
 					}
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 109 "scanner.l"
+#line 110 "scanner.l"
 {
-						printf("SYM  \"%c%c\"\n", 33, 61);
+						// printf("SYM  \"%c%c\"\n", 33, 61);
 						return NEQ;
 					}
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 113 "scanner.l"
+#line 114 "scanner.l"
 {
-						printf("SYM  \"%c%c\"\n", 60, 61);
+						// printf("SYM  \"%c%c\"\n", 60, 61);
 						return LTEQ;
 					}
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 117 "scanner.l"
+#line 118 "scanner.l"
 {
-						printf("SYM  \"%c%c\"\n", 62,61);
+						// printf("SYM  \"%c%c\"\n", 62,61);
 						return GTEQ;
 					}
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 121 "scanner.l"
+#line 122 "scanner.l"
 {
-						printf("SYM  \"%c\"\n", 60);
+						// printf("SYM  \"%c\"\n", 60);
 						return LT;
 					}
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 125 "scanner.l"
+#line 126 "scanner.l"
 {
-						printf("SYM  \"%c\"\n", 62);
+						// printf("SYM  \"%c\"\n", 62);
 						return GT;
 					}
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 129 "scanner.l"
+#line 130 "scanner.l"
 {
-						printf("SYM  \"%c\"\n", 41);
+						// printf("SYM  \"%c\"\n", 41);
 						return CLOSEPAR;
 					}
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 133 "scanner.l"
+#line 134 "scanner.l"
 {
-						printf("SYM  \"%c\"\n", 40);
+						// printf("SYM  \"%c\"\n", 40);
 						return OPENPAR;
 					}
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 137 "scanner.l"
+#line 138 "scanner.l"
 {
-						printf("SYM  \"%c\"\n", 91);
+						// printf("SYM  \"%c\"\n", 91);
 						return OPENCOLC;
 					}
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 141 "scanner.l"
+#line 142 "scanner.l"
 {
-						printf("SYM  \"%c\"\n", 93);
+						// printf("SYM  \"%c\"\n", 93);
 						return CLOSECOLC;
 					}
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 145 "scanner.l"
+#line 146 "scanner.l"
 {
-						printf("SYM  \"%c\"\n", 123);
+						// printf("SYM  \"%c\"\n", 123);
 						return OPENCH;
 					}
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 149 "scanner.l"
+#line 150 "scanner.l"
 {
-						printf("SYM  \"%c\"\n", 125);
+						// printf("SYM  \"%c\"\n", 125);
 						return CLOSECH;
 					}
 	YY_BREAK
 case 35:
 /* rule 35 can match eol */
 YY_RULE_SETUP
-#line 154 "scanner.l"
+#line 155 "scanner.l"
 yylineno++;
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 155 "scanner.l"
+#line 156 "scanner.l"
 ;
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 156 "scanner.l"
+#line 157 "scanner.l"
 {
 						print_error();
 						// yyerror("CARACTER NAO ESPERADO");
@@ -1130,10 +1131,10 @@ YY_RULE_SETUP
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 161 "scanner.l"
+#line 162 "scanner.l"
 ECHO;
 	YY_BREAK
-#line 1137 "lex.yy.c"
+#line 1138 "lex.yy.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -2146,7 +2147,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 161 "scanner.l"
+#line 162 "scanner.l"
 
 
 

@@ -672,9 +672,9 @@ int geraExpr(tipoTree *p, int depth){
 	if(p->num_filhos == 3){
 		x = geraExpr(p->filhos[0], depth);
 		y = geraExpr(p->filhos[2], depth);
-		fprintf(yyout, "lw $t1, 0($sp)\n");
+		fprintf(yyout, "lw $t1, 4($sp)\n");
 		fprintf(yyout,"addiu $sp, $sp, 4\n");
-		fprintf(yyout, "lw $a0, 0($sp)\n");
+		fprintf(yyout, "lw $a0, 4($sp)\n");
 		fprintf(yyout,"addiu $sp, $sp, 4\n");
 
 		if(p->filhos[1]->tokenNumber == PLUS){
@@ -735,7 +735,7 @@ int geraExpr(tipoTree *p, int depth){
 	else if(p->num_filhos == 2){
 
 		geraExpr(p->filhos[1], depth);
-		fprintf(yyout, "lw $a0, 0($sp)\n");
+		fprintf(yyout, "lw $a0, 4($sp)\n");
 		fprintf(yyout, "addiu $sp, $sp, 4\n");
 
 		if(p->filhos[0]->tokenNumber == MINUS){
@@ -754,33 +754,26 @@ int geraExpr(tipoTree *p, int depth){
 	}
 	else if(p->num_filhos == 1)
 	{
-		printf("entrou\n");
-		if(p->tokenNumber == NUMBER)
-		{
-			int intValue = atoi(p->id);
-			fprintf(yyout, "li $a0, %d\n", intValue);
+		printf("gera code funcall\n");
+		return 1;
+	}
+	else if(p->tokenNumber == NUMBER) {
+		int intValue = atoi(p->id);
+		fprintf(yyout, "li $a0, %d\n", intValue);
+		fprintf(yyout, "sw $a0, 0($sp)\n");
+		fprintf(yyout,"addiu $sp, $sp, -4\n");
+		return intValue;
+	}
+	else if(p->tokenNumber == NAME) {
+		listaVar *aux = consultaVar(vars, p->id);
+		if (aux == NULL)
+			printf("Erro : var nao encontrada!!!!\n");
+		else{
+			fprintf(yyout, "lw $a0, %s\n", p->id);
 			fprintf(yyout, "sw $a0, 0($sp)\n");
 			fprintf(yyout,"addiu $sp, $sp, -4\n");
-			return intValue;
 		}
-		else if(p->tokenNumber == NAME){
-			
-			listaVar *aux = consultaVar(vars, p->id);
-			if (aux == NULL)
-				printf("Erro : var nao encontrada!!!!\n");
-			else{
-				fprintf(yyout, "lw $a0, %s\n", p->id);
-				fprintf(yyout, "sw $a0, 0($sp)\n");
-				fprintf(yyout,"addiu $sp, $sp, -4\n");
-			}
-			return aux->varValue;
-		}
-		else{
-			printf("gera code funcall\n");
-			return 1;
-		}
-		printf("saiu\n");
-		
+		return aux->varValue;
 	}
 	return 0;
 }
@@ -832,6 +825,10 @@ int main(int argc, char** argv){
 	fprintf(yyout,"main:\n");
 
 	geraCode(treeRoot, 0);
+
+	//Printa acumulador
+	fprintf(yyout, "li $v0, 1\n");
+	fprintf(yyout, "syscall\n");
 
 	fprintf(yyout, "li $v0, 4\n");
 	fprintf(yyout, "la $a0, _newline\n");

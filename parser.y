@@ -7,6 +7,9 @@
 
 #define YYDEBUG 1
 
+int cont_while = 0;
+int cont_for = 0;
+int cont_if = 0;
 
 extern FILE *yyin;
 extern FILE *yyout;
@@ -15,24 +18,24 @@ int yylex(void);
 tipoTree * cria_node(char nonT[20], int n_filhos, ...);
 tipoTree * terminalNumber(int token_n);
 tipoTree * terminalToken(char id[20], int token_n);
-char * consultaToken(int token_n);
+int geraCode(tipoTree *p, int depth);
+
 void yyerror(char *string);
+
+
+listaVar * consultaVar(listaVar *p, char *id);
+
 int printTree(tipoTree *p, int depth);
 int printFuncall(tipoTree *p, int depth);
-
-
-int insereVar(listaVar **p, char *id, int value);
-listaVar * consultaVar(listaVar *p, char *id);
-int consultaFuncs(listaFuncs *p, char *id);
-int insereFunc(listaFuncs **p, char *id);
-int assignValues(tipoTree *p);
 
 
 tipoTree *treeRoot = NULL;
 listaVar *vars = NULL;
 listaFuncs *funcs = NULL;
 int G_NUM = 1;
+int G_ATT = 1;
 int G_ACC = 0;
+int SALVEI = 0;
 
 %}
 
@@ -144,7 +147,7 @@ multExpr  : { $$ = NULL; }
 
 expr      : NUMBER { $$ = terminalToken($1, NUMBER); }
           | NAME { $$ = terminalToken($1, NAME); }
-          | OPENPAR expr CLOSEPAR  { $$ = cria_node("expr", 3, terminalToken("(", OPENPAR), $2, terminalToken(")", CLOSEPAR)); }
+          | OPENPAR expr CLOSEPAR  { $$ = $2; }
           | funCall  { $$ = cria_node("expr", 1, $1); }
           | expr PLUS expr { $$ = cria_node("expr", 3, $1, terminalToken("+", PLUS), $3); }
           | expr MINUS expr  { $$ = cria_node("expr", 3, $1, terminalToken("-", MINUS), $3); }
@@ -207,6 +210,56 @@ tipoTree * terminalToken(char id[20], int token_n){
 	aux->id = malloc(sizeof(char)*strlen(id));
 	strcpy(aux->id, id);
 	return aux;
+}
+
+int insereVar(listaVar **p, char *id, int value){
+
+	listaVar *aux = malloc(sizeof(struct listaV));
+	strcpy(aux->varName, id);
+	aux->varValue = value;
+	aux->prox = *p;
+	*p = aux;
+}
+
+listaVar * consultaVar(listaVar *p, char *id){
+
+	listaVar *aux;
+	for(aux = p; aux != NULL; aux = aux->prox){
+		if( strcmp(aux->varName,id) == 0){
+			return aux;
+		}
+	}
+	return NULL;
+}
+
+int consultaFuncs(listaFuncs *p, char *id){
+
+	listaFuncs *aux;
+	for(aux = p; aux != NULL; aux = aux->prox){
+		if( strcmp(aux->fname,id) == 0 ){
+			return 1;
+		}
+	}
+	return 0;
+}
+
+int insereFunc(listaFuncs **p, char *id){
+
+	listaFuncs *aux = malloc(sizeof(struct listaF));
+	strcpy(aux->fname, id);
+	aux->prox = *p;
+	*p = aux;
+}
+
+int updateVar(listaVar *p, char *id, int newValue){
+
+	listaVar *aux = consultaVar(p, id);
+	// printf("foi?\n");
+	if (aux != NULL)
+		aux->varValue = newValue;
+	else
+		return -1;
+	return 1;
 }
 
 void yyerror(char *string){  fprintf(stderr, "%s\n", string);}
@@ -482,78 +535,25 @@ int printTree(tipoTree *p, int depth){
 	}
 }
 
-
-int insereVar(listaVar **p, char *id, int value){
-
-	listaVar *aux = malloc(sizeof(struct listaV));
-	strcpy(aux->varName, id);
-	aux->varValue = value;
-	aux->prox = *p;
-	*p = aux;
-}
-
-listaVar * consultaVar(listaVar *p, char *id){
-
-	listaVar *aux;
-	for(aux = p; aux != NULL; aux = aux->prox){
-		if( strcmp(aux->varName,id) == 0){
-			return aux;
-		}
-	}
-	return NULL;
-}
-
-int consultaFuncs(listaFuncs *p, char *id){
-
-	listaFuncs *aux;
-	for(aux = p; aux != NULL; aux = aux->prox){
-		if( strcmp(aux->fname,id) == 0 ){
-			return 1;
-		}
-	}
-	return 0;
-}
-
-int insereFunc(listaFuncs **p, char *id){
-
-	listaFuncs *aux = malloc(sizeof(struct listaF));
-	strcpy(aux->fname, id);
-	aux->prox = *p;
-	*p = aux;
-}
-
-int updateVar(listaVar *p, char *id, int newValue){
-
-	listaVar *aux = consultaVar(p, id);
-	// printf("foi?\n");
-	if (aux != NULL)
-		aux->varValue = newValue;
-	else
-		return -1;
-	return 1;
-}
-
-
-int trataFuncs(tipoTree *p){
-
-	if(p == NULL)
-		return 0;
-
-	if( strcmp(p->nonTerminal,"comando") == 0){
-		if(p->filhos[0]->id != NULL)
-		{
-			if( strcmp(p->filhos[0]->id, "function")){
-				if(!consultaFuncs(funcs, p->filhos[1]->id))
-					insereFunc(&funcs, p->filhos[1]->id);
-			}
-		}
-	}
-	else
+int nameOrNumber (tipoTree *p){
+	printf("foi aqui\n");
+	if(p->tokenNumber == NUMBER)
 	{
-		int i;
-		for(i = 0; i < p->num_filhos; i++)
-			trataFuncs(p->filhos[i]);
+		printf("achei o numero %d\n", p->number);
+		fprintf(yyout, "li $a0, %d\n",p->number);
+		G_ACC = p->number;
 	}
+	if(p->tokenNumber == NAME)
+	{
+		printf("achei a var %s\n", p->id);
+		listaVar *aux = consultaVar(vars, p->id);
+		if (aux == NULL)
+			printf("Erro : var nao encontrada!!!!\n");
+		else
+		fprintf(yyout, "lw $a0, %s\n", p->id);
+		G_ACC = aux->varValue;
+	}
+	printf("saiu nameOrNumber\n");
 }
 
 int trataVars(tipoTree *p){
@@ -575,6 +575,236 @@ int trataVars(tipoTree *p){
 	}
 }
 
+int trataFuncs(tipoTree *p){
+
+	if(p == NULL)
+		return 0;
+
+	if(strcmp(p->nonTerminal,"decFunc") == 0){
+
+		if(!consultaFuncs(funcs, p->filhos[2]->id)) {
+			insereFunc(&funcs, p->filhos[2]->id);
+		}
+	}
+	else
+	{
+		int i;
+		for(i = 0; i < p->num_filhos; i++)
+			trataFuncs(p->filhos[i]);
+	}
+}
+
+// int buscaValor(tipoTree *p){
+
+// 	int new_value, i;
+// 	if (p == NULL)
+// 		return 0;
+// 	printf("buscando valor em %s\n", p->nonTerminal);
+// 	if (p->tokenNumber == COMMA){
+// 		G_ATT++;
+// 		return 0;
+// 	}
+// 	if (p->tokenNumber == NUMBER)
+// 	{
+// 		if(G_ATT == G_NUM){
+// 			SALVEI = p->number;
+// 			return 0;
+// 		}
+// 	}
+// 	if (p->tokenNumber == NAME)
+// 	{
+// 		if(G_ATT == G_NUM){
+// 			listaVar *aux = consultaVar(vars,p->id);
+// 			SALVEI = aux->varValue;
+// 			return 0;
+// 		}
+// 	}
+// 	if ( strcmp(p->nonTerminal,"opbin") == 0 ){
+
+// 		if(G_ATT == G_NUM){
+// 			geraCodeOpBin(p);
+// 			SALVEI = G_ACC;
+// 			printf("salvei : %d\n", SALVEI);
+// 			return 0;
+// 		}
+// 	}
+// 	if ( strcmp(p->nonTerminal,"opunaria") == 0 ){
+
+// 		if(G_ATT == G_NUM){
+// 			geraCodeOpBin(p);
+// 			SALVEI = G_ACC;
+// 			return 0;
+// 		}
+// 	}
+// 	else
+// 		for(i = 0; i < p->num_filhos; i++)
+// 			buscaValor(p->filhos[i]);
+// }
+
+// int buscaVar(tipoTree *p, tipoTree *q){
+
+// 	int new_value, i;
+// 	if(p == NULL)
+// 		return 0;
+// 	else if(p->nonTerminal == NULL){
+// 		if (p->tokenNumber == NAME){
+// 			buscaValor(q);
+// 			printf("FOI\n");
+// 			new_value = SALVEI;
+// 			updateVar(vars, p->id, new_value);
+// 			fprintf(yyout, "li $a0, %d\n", new_value);
+// 			fprintf(yyout, "sw $a0, %s\n", p->id);
+// 			G_NUM++;
+// 			G_ATT = 1;
+// 		}
+// 	}
+// 	else
+// 		for(i = 0; i < p->num_filhos; i++)
+// 			buscaVar(p->filhos[i], q);
+// }
+
+int geraExpr(tipoTree *p, int depth){
+
+	int i, x,y;
+	if (p == NULL)
+		return 0;
+
+	if(p->num_filhos == 3){
+		x = geraExpr(p->filhos[0], depth);
+		y = geraExpr(p->filhos[2], depth);
+		fprintf(yyout, "lw $t1, 0($sp)\n");
+		fprintf(yyout,"addiu $sp, $sp, 4\n");
+		fprintf(yyout, "lw $a0, 0($sp)\n");
+		fprintf(yyout,"addiu $sp, $sp, 4\n");
+
+		if(p->filhos[1]->tokenNumber == PLUS){
+			fprintf(yyout,"add $a0, $a0, $t1\n");
+			G_ACC = x + y;
+		}
+		else if(p->filhos[1]->tokenNumber == MINUS){
+			fprintf(yyout,"sub $a0, $a0, $t1\n");
+			G_ACC = x - y;
+		}
+		else if(p->filhos[1]->tokenNumber == TIMES){
+			fprintf(yyout,"mult $a0, $t1\n");
+			fprintf(yyout,"mflo $a0\n");
+			G_ACC = x*y;
+		}
+		else if(p->filhos[1]->tokenNumber == DIV){
+			fprintf(yyout,"div $a0, $t1\n");
+			fprintf(yyout,"mflo $a0\n");
+			G_ACC =  x/y;
+		}
+		else if(p->filhos[1]->tokenNumber == EQ)
+		{
+			fprintf(yyout, "seq $a0, $a0, $t1\n");
+		}
+		else if(p->filhos[1]->tokenNumber == NEQ)
+		{
+			fprintf(yyout, "sne $a0, $a0, $t1\n");
+		}
+		else if(p->filhos[1]->tokenNumber == GTEQ)
+		{
+			fprintf(yyout, "sge $a0, $a0, $t1\n");
+		}
+		else if(p->filhos[1]->tokenNumber == GT)
+		{
+			fprintf(yyout, "sgt $a0, $a0, $t1\n");
+		}
+		else if(p->filhos[1]->tokenNumber == LTEQ)
+		{
+			fprintf(yyout, "sle $a0, $a0, $t1\n");
+		}
+		else if(p->filhos[1]->tokenNumber == LT)
+		{
+			fprintf(yyout, "slt $a0, $a0, $t1\n");
+		}
+		else if(p->filhos[1]->tokenNumber == AND)
+		{
+			fprintf(yyout, "and $a0, $a0, $t1\n");
+		}
+		else if(p->filhos[1]->tokenNumber == OR)
+		{
+			fprintf(yyout, "or $a0, $a0, $t1\n");
+		}
+
+		fprintf(yyout, "sw $a0, 0($sp)\n");
+		fprintf(yyout, "addiu $sp, $sp, -4\n");
+		return 1;
+	}
+	else if(p->num_filhos == 2){
+
+		geraExpr(p->filhos[1], depth);
+		fprintf(yyout, "lw $a0, 0($sp)\n");
+		fprintf(yyout, "addiu $sp, $sp, 4\n");
+
+		if(p->filhos[0]->tokenNumber == MINUS){
+			fprintf(yyout, "li $t1 -1\n");
+			fprintf(yyout,"mult $a0, $t1\n");
+			fprintf(yyout,"mflo $a0\n");
+		}
+		else{
+			if(G_ACC == 1)
+				fprintf(yyout, "li $a0, 0\n");
+			else
+				fprintf(yyout, "li $a0, 1\n");
+		}
+		
+		return 1;
+	}
+	else if(p->num_filhos == 1)
+	{
+		printf("entrou\n");
+		if(p->tokenNumber == NUMBER)
+		{
+			int intValue = atoi(p->id);
+			fprintf(yyout, "li $a0, %d\n", intValue);
+			fprintf(yyout, "sw $a0, 0($sp)\n");
+			fprintf(yyout,"addiu $sp, $sp, -4\n");
+			return intValue;
+		}
+		else if(p->tokenNumber == NAME){
+			
+			listaVar *aux = consultaVar(vars, p->id);
+			if (aux == NULL)
+				printf("Erro : var nao encontrada!!!!\n");
+			else{
+				fprintf(yyout, "lw $a0, %s\n", p->id);
+				fprintf(yyout, "sw $a0, 0($sp)\n");
+				fprintf(yyout,"addiu $sp, $sp, -4\n");
+			}
+			return aux->varValue;
+		}
+		else{
+			printf("gera code funcall\n");
+			return 1;
+		}
+		printf("saiu\n");
+		
+	}
+	return 0;
+}
+
+int geraCode(tipoTree *p, int depth){
+
+	int i;
+	if(p == NULL)
+		return 0;
+
+	if(p->nonTerminal != NULL){
+		printf("%s\n", p->nonTerminal);
+		if(strcmp(p->nonTerminal, "expr") == 0){
+			printf("jeba\n");
+			geraExpr(p, depth);
+			return 0;
+		}
+	}
+
+	for(i = 0; i < p->num_filhos; i++){
+			geraCode(p->filhos[i], depth+1);
+	}
+}
+
 int main(int argc, char** argv){
 
 	yyin = fopen(argv[1], "r");
@@ -584,11 +814,13 @@ int main(int argc, char** argv){
 	else{
 		yyparse();
 	}
-	// Incialização do ambiente
-	// printTree(treeRoot, 0);
+	//fprintf(yyout, "[program "); 		// comment of the implemented code in parser	
+	//printTree(treeRoot, 0);  			// comment of the implemented code in parser	
+	//fprintf(yyout, "]\n"); 			// comment of the implemented code in parser	
+	
+	//Inicialização de ambiente
 	insereFunc(&funcs, "print");
 	trataFuncs(treeRoot);
-	printf("chegou\n");
 
 	//Inicializacao MIPS
 	fprintf(yyout, "\n.data\n");
@@ -599,8 +831,7 @@ int main(int argc, char** argv){
 	fprintf(yyout,".globl main\n\n");
 	fprintf(yyout,"main:\n");
 
-	//Chamar função que gera código aqui
-
+	geraCode(treeRoot, 0);
 
 	fprintf(yyout, "li $v0, 4\n");
 	fprintf(yyout, "la $a0, _newline\n");
@@ -609,7 +840,6 @@ int main(int argc, char** argv){
 	fprintf(yyout, "\nli $v0, 10\n");
 	fprintf(yyout, "syscall");
 	fprintf(yyout,"\n");
-
 
 	fclose(yyin);
 	fclose(yyout);

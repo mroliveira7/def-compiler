@@ -1,4 +1,4 @@
 def int foo(){
 	int a;
-	a = 1+2;
+	a = 1+2+3;
 }

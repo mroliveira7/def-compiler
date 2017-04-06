@@ -730,7 +730,7 @@ int geraExpr(tipoTree *p, int depth){
 
 		fprintf(yyout, "sw $a0, 0($sp)\n");
 		fprintf(yyout, "addiu $sp, $sp, -4\n");
-		return 1;
+		return G_ACC;
 	}
 	else if(p->num_filhos == 2){
 
@@ -778,6 +778,59 @@ int geraExpr(tipoTree *p, int depth){
 	return 0;
 }
 
+int geraMultStmt(tipoTree *p, int depth){
+
+	int i;
+	if (p == NULL)
+		return 0;
+
+	if(p->nonTerminal != NULL && strcmp(p->nonTerminal, "stmt") == 0){
+
+		if(p->filhos[0]->tokenNumber == NAME)
+		{
+			geraExpr(p->filhos[2], depth);
+			fprintf(yyout, "addiu $sp, $sp, 4\n");
+			listaVar *aux;
+			int new_value = G_ACC;
+			aux = consultaVar(vars, p->filhos[0]->id);
+			aux->varValue = new_value;
+			fprintf(yyout, "sw $a0, %s\n", p->filhos[0]->id);
+			printf("var : %s\n", p->filhos[0]->id);
+			printf("valor : %d\n", new_value);
+			return 1;
+		}
+		else if (p->filhos[0]->tokenNumber == IF)
+		{
+
+		}
+		else if (p->filhos[0]->tokenNumber == WHILE)
+		{
+
+		}
+		else if (p->filhos[0]->tokenNumber == RETURN)
+		{
+
+		}
+		else if (p->filhos[0]->tokenNumber == BREAK)
+		{
+
+		}
+		else if (p->filhos[0]->tokenNumber == CONTINUE)
+		{
+
+		}
+		else{
+			printf("gera funcall\n");
+		}
+
+	}
+
+	for(i = 0; i < p->num_filhos; i++)
+		geraMultStmt(p->filhos[i], depth);
+
+	return 0;
+}
+
 int geraCode(tipoTree *p, int depth){
 
 	int i;
@@ -785,10 +838,16 @@ int geraCode(tipoTree *p, int depth){
 		return 0;
 
 	if(p->nonTerminal != NULL){
+
 		printf("%s\n", p->nonTerminal);
+		
 		if(strcmp(p->nonTerminal, "expr") == 0){
 			printf("jeba\n");
 			geraExpr(p, depth);
+			return 0;
+		}
+		if(strcmp(p->nonTerminal, "multStmt") == 0){
+			geraMultStmt(p, depth);
 			return 0;
 		}
 	}

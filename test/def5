@@ -1,0 +1,10 @@
+def int bar()
+{
+  a = 3;
+  if(a == 3){
+  	a = 4;
+  }	else{
+  	a = 3;
+  }	
+  return a;
+}

@@ -801,11 +801,25 @@ int geraMultStmt(tipoTree *p, int depth){
 		}
 		else if (p->filhos[0]->tokenNumber == IF)
 		{
-
+			cont_if++;
+			geraExpr(p->filhos[2], depth);
+			fprintf(yyout, "li $t1, 0\n");
+			fprintf(yyout, "beq $a0, $t1, false_bi%d\n",cont_if);
+			geraCode(p->filhos[4],depth);
+			fprintf(yyout, "j exit_if%d\n", cont_if);
+			fprintf(yyout, "false_bi%d:\n", cont_if); //ver essa linha
+			fprintf(yyout, "exit_if%d:\n", cont_if);	
 		}
 		else if (p->filhos[0]->tokenNumber == WHILE)
 		{
-
+			cont_while++;
+			fprintf(yyout, "true_bw%d:\n", cont_while);
+			geraExpr(p->filhos[2], depth);
+			fprintf(yyout, "li $t1, 0\n");
+			fprintf(yyout, "beq $a0, $t1, false_bw%d\n", cont_while);
+			geraCode(p->filhos[4], depth);
+			fprintf(yyout, "j true_bw%d\n", cont_while);
+			fprintf(yyout, "false_bw%d:\n", cont_while);
 		}
 		else if (p->filhos[0]->tokenNumber == RETURN)
 		{

@@ -3,10 +3,10 @@ def int bar()
   int a = 0;
   int c = 4;
 
-  while(a<2){
-  	a = a + 1; 
+  while(a < 3){
+  	a = a + 1;
   	c = 2;
 	print(a);
   }
+  print(a + c);
 }
-

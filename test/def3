@@ -1,13 +1,6 @@
-<<<<<<< HEAD
-def int foo(){
-	int a;
-	a = 1+2+3;
-}
-=======
 def int foo()
 {
   int a;
   a = ((5*3) - 5)/2;
   return a;
 }
->>>>>>> 4becb713065fec0c3eb063b1c598470e107557a7

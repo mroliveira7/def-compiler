@@ -665,7 +665,7 @@ int trataFuncs(tipoTree *p){
 
 int geraExpr(tipoTree *p, int depth){
 
-	int i, x,y;
+	int i, x, y;
 	if (p == NULL)
 		return 0;
 
@@ -749,7 +749,7 @@ int geraExpr(tipoTree *p, int depth){
 			else
 				fprintf(yyout, "li $a0, 1\n");
 		}
-		
+
 		return 1;
 	}
 	else if(p->num_filhos == 1)
@@ -775,6 +775,10 @@ int geraExpr(tipoTree *p, int depth){
 		}
 		return aux->varValue;
 	}
+	printf("aquiiiii\n");
+	for(i = 0; i < p->num_filhos; i++){
+		geraExpr(p->filhos[i], depth);
+	}
 	return 0;
 }
 
@@ -795,8 +799,6 @@ int geraMultStmt(tipoTree *p, int depth){
 			aux = consultaVar(vars, p->filhos[0]->id);
 			aux->varValue = new_value;
 			fprintf(yyout, "sw $a0, %s\n", p->filhos[0]->id);
-			printf("var : %s\n", p->filhos[0]->id);
-			printf("valor : %d\n", aux->varValue);
 			return 1;
 		}
 		else if (p->filhos[0]->tokenNumber == IF)
@@ -838,7 +840,7 @@ int geraMultStmt(tipoTree *p, int depth){
 		else{
 			if(strcmp(p->filhos[0]->filhos[0]->id, "print") == 0){
 				printf("Printa algo\n");
-				geraExpr(p->filhos[2], depth);
+				geraExpr(p->filhos[0]->filhos[2]->filhos[0], depth);
 				fprintf(yyout, "li $v0, 1\n");
 				fprintf(yyout, "syscall\n");
 				fprintf(yyout, "li $v0, 4\n");
@@ -848,9 +850,7 @@ int geraMultStmt(tipoTree *p, int depth){
 			}
 			printf("gera funcall\n");
 		}
-
 	}
-
 	for(i = 0; i < p->num_filhos; i++)
 		geraMultStmt(p->filhos[i], depth);
 
@@ -866,7 +866,7 @@ int geraCode(tipoTree *p, int depth){
 	if(p->nonTerminal != NULL){
 
 		printf("%s\n", p->nonTerminal);
-		
+
 		if(strcmp(p->nonTerminal, "expr") == 0){
 			printf("jeba\n");
 			geraExpr(p, depth);
@@ -892,10 +892,10 @@ int main(int argc, char** argv){
 	else{
 		yyparse();
 	}
-	//fprintf(yyout, "[program "); 		// comment of the implemented code in parser	
-	//printTree(treeRoot, 0);  			// comment of the implemented code in parser	
-	//fprintf(yyout, "]\n"); 			// comment of the implemented code in parser	
-	
+	//fprintf(yyout, "[program "); 		// comment of the implemented code in parser
+	//printTree(treeRoot, 0);  			// comment of the implemented code in parser
+	//fprintf(yyout, "]\n"); 			// comment of the implemented code in parser
+
 	//Inicialização de ambiente
 	insereFunc(&funcs, "print");
 	trataFuncs(treeRoot);

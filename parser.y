@@ -796,16 +796,32 @@ int geraMultStmt(tipoTree *p, int depth){
 			aux->varValue = new_value;
 			fprintf(yyout, "sw $a0, %s\n", p->filhos[0]->id);
 			printf("var : %s\n", p->filhos[0]->id);
-			printf("valor : %d\n", new_value);
+			printf("valor : %d\n", aux->varValue);
 			return 1;
 		}
 		else if (p->filhos[0]->tokenNumber == IF)
 		{
-
+			cont_if++;
+			geraExpr(p->filhos[2], depth);
+			fprintf(yyout, "li $t1, 0\n");
+			fprintf(yyout, "beq $a0, $t1, false_bi%d\n",cont_if);
+			geraCode(p->filhos[4],depth);
+			fprintf(yyout, "j exit_if%d\n", cont_if);
+			fprintf(yyout, "false_bi%d:\n", cont_if); //ver essa linha
+			fprintf(yyout, "exit_if%d:\n", cont_if);
+			return 1;
 		}
 		else if (p->filhos[0]->tokenNumber == WHILE)
 		{
-
+			cont_while++;
+			fprintf(yyout, "true_bw%d:\n", cont_while);
+			geraExpr(p->filhos[2], depth);
+			fprintf(yyout, "li $t1, 0\n");
+			fprintf(yyout, "beq $a0, $t1, false_bw%d\n", cont_while);
+			geraCode(p->filhos[4], depth);
+			fprintf(yyout, "j true_bw%d\n", cont_while);
+			fprintf(yyout, "false_bw%d:\n", cont_while);
+			return 1;
 		}
 		else if (p->filhos[0]->tokenNumber == RETURN)
 		{
@@ -820,6 +836,16 @@ int geraMultStmt(tipoTree *p, int depth){
 
 		}
 		else{
+			if(strcmp(p->filhos[0]->filhos[0]->id, "print") == 0){
+				printf("Printa algo\n");
+				geraExpr(p->filhos[2], depth);
+				fprintf(yyout, "li $v0, 1\n");
+				fprintf(yyout, "syscall\n");
+				fprintf(yyout, "li $v0, 4\n");
+				fprintf(yyout, "la $a0, _newline\n");
+				fprintf(yyout, "syscall\n");
+				return 1;
+			}
 			printf("gera funcall\n");
 		}
 
@@ -886,8 +912,8 @@ int main(int argc, char** argv){
 	geraCode(treeRoot, 0);
 
 	//Printa acumulador
-	fprintf(yyout, "li $v0, 1\n");
-	fprintf(yyout, "syscall\n");
+	// fprintf(yyout, "li $v0, 1\n");
+	// fprintf(yyout, "syscall\n");
 
 	fprintf(yyout, "li $v0, 4\n");
 	fprintf(yyout, "la $a0, _newline\n");

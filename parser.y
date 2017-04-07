@@ -735,15 +735,13 @@ int geraMultStmt(tipoTree *p, int depth){
 		}
 		else if (p->filhos[0]->tokenNumber == RETURN)
 		{
-
 		}
 		else if (p->filhos[0]->tokenNumber == BREAK)
 		{
-
+			fprintf(yyout, "j false_bw%d\n", cont_while);
 		}
 		else if (p->filhos[0]->tokenNumber == CONTINUE)
 		{
-
 		}
 		else{
 			if(strcmp(p->filhos[0]->filhos[0]->id, "print") == 0){
@@ -844,6 +842,8 @@ int main(int argc, char** argv){
 	fprintf(yyout,".globl main\n\n");
 	fprintf(yyout,"main:\n");
 
+	//printTree(treeRoot, 0);
+	
 	geraCode(treeRoot, 0);
 
 	//Printa acumulador

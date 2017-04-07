@@ -654,10 +654,7 @@ int geraExpr(tipoTree *p, int depth){
 			fprintf(yyout,"mflo $a0\n");
 		}
 		else{
-			if(G_ACC == 1)
-				fprintf(yyout, "li $a0, 0\n");
-			else
-				fprintf(yyout, "li $a0, 1\n");
+			fprintf(yyout, "not $a0, $a0\n");
 		}
 
 		return 1;

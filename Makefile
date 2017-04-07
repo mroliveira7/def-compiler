@@ -4,4 +4,4 @@ all: 	parser.h scanner.l parser.y
 	gcc lex.yy.c y.tab.c -o compilador
 
 clean:
-	rm *.tab.c *.tab.h compilador
+	rm *.tab.c *.tab.h lex.yy.c compilador

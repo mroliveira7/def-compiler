@@ -535,27 +535,6 @@ int printTree(tipoTree *p, int depth){
 	}
 }
 
-int nameOrNumber (tipoTree *p){
-	printf("foi aqui\n");
-	if(p->tokenNumber == NUMBER)
-	{
-		printf("achei o numero %d\n", p->number);
-		fprintf(yyout, "li $a0, %d\n",p->number);
-		G_ACC = p->number;
-	}
-	if(p->tokenNumber == NAME)
-	{
-		printf("achei a var %s\n", p->id);
-		listaVar *aux = consultaVar(vars, p->id);
-		if (aux == NULL)
-			printf("Erro : var nao encontrada!!!!\n");
-		else
-		fprintf(yyout, "lw $a0, %s\n", p->id);
-		G_ACC = aux->varValue;
-	}
-	printf("saiu nameOrNumber\n");
-}
-
 int trataVars(tipoTree *p){
 
 	if(p == NULL)
@@ -593,75 +572,6 @@ int trataFuncs(tipoTree *p){
 			trataFuncs(p->filhos[i]);
 	}
 }
-
-// int buscaValor(tipoTree *p){
-
-// 	int new_value, i;
-// 	if (p == NULL)
-// 		return 0;
-// 	printf("buscando valor em %s\n", p->nonTerminal);
-// 	if (p->tokenNumber == COMMA){
-// 		G_ATT++;
-// 		return 0;
-// 	}
-// 	if (p->tokenNumber == NUMBER)
-// 	{
-// 		if(G_ATT == G_NUM){
-// 			SALVEI = p->number;
-// 			return 0;
-// 		}
-// 	}
-// 	if (p->tokenNumber == NAME)
-// 	{
-// 		if(G_ATT == G_NUM){
-// 			listaVar *aux = consultaVar(vars,p->id);
-// 			SALVEI = aux->varValue;
-// 			return 0;
-// 		}
-// 	}
-// 	if ( strcmp(p->nonTerminal,"opbin") == 0 ){
-
-// 		if(G_ATT == G_NUM){
-// 			geraCodeOpBin(p);
-// 			SALVEI = G_ACC;
-// 			printf("salvei : %d\n", SALVEI);
-// 			return 0;
-// 		}
-// 	}
-// 	if ( strcmp(p->nonTerminal,"opunaria") == 0 ){
-
-// 		if(G_ATT == G_NUM){
-// 			geraCodeOpBin(p);
-// 			SALVEI = G_ACC;
-// 			return 0;
-// 		}
-// 	}
-// 	else
-// 		for(i = 0; i < p->num_filhos; i++)
-// 			buscaValor(p->filhos[i]);
-// }
-
-// int buscaVar(tipoTree *p, tipoTree *q){
-
-// 	int new_value, i;
-// 	if(p == NULL)
-// 		return 0;
-// 	else if(p->nonTerminal == NULL){
-// 		if (p->tokenNumber == NAME){
-// 			buscaValor(q);
-// 			printf("FOI\n");
-// 			new_value = SALVEI;
-// 			updateVar(vars, p->id, new_value);
-// 			fprintf(yyout, "li $a0, %d\n", new_value);
-// 			fprintf(yyout, "sw $a0, %s\n", p->id);
-// 			G_NUM++;
-// 			G_ATT = 1;
-// 		}
-// 	}
-// 	else
-// 		for(i = 0; i < p->num_filhos; i++)
-// 			buscaVar(p->filhos[i], q);
-// }
 
 int geraExpr(tipoTree *p, int depth){
 
@@ -807,9 +717,10 @@ int geraMultStmt(tipoTree *p, int depth){
 			geraExpr(p->filhos[2], depth);
 			fprintf(yyout, "li $t1, 0\n");
 			fprintf(yyout, "beq $a0, $t1, false_bi%d\n",cont_if);
-			geraCode(p->filhos[4],depth);
+			geraCode(p->filhos[4], depth);
 			fprintf(yyout, "j exit_if%d\n", cont_if);
-			fprintf(yyout, "false_bi%d:\n", cont_if); //ver essa linha
+			fprintf(yyout, "false_bi%d:\n", cont_if);
+			geraCode(p->filhos[5], depth);
 			fprintf(yyout, "exit_if%d:\n", cont_if);
 			return 1;
 		}
@@ -857,6 +768,32 @@ int geraMultStmt(tipoTree *p, int depth){
 	return 0;
 }
 
+int geraMultVar(tipoTree *p, int depth){
+
+	int i;
+	if (p == NULL)
+		return 0;
+
+	if(p->nonTerminal != NULL && strcmp(p->nonTerminal, "decVar") == 0){
+
+		if(p->filhos[2]){
+			geraExpr(p->filhos[2]->filhos[1], depth);
+			fprintf(yyout, "addiu $sp, $sp, 4\n");
+			listaVar *aux;
+			int new_value = G_ACC;
+			aux = consultaVar(vars, p->filhos[1]->id);
+			aux->varValue = new_value;
+			fprintf(yyout, "sw $a0, %s\n", p->filhos[1]->id);
+			return 1;
+		}
+		return 1;
+	}
+	for(i = 0; i < p->num_filhos; i++){
+		geraMultVar(p->filhos[i], depth);
+	}
+	return 0;
+}
+
 int geraCode(tipoTree *p, int depth){
 
 	int i;
@@ -876,6 +813,10 @@ int geraCode(tipoTree *p, int depth){
 			geraMultStmt(p, depth);
 			return 0;
 		}
+		if(strcmp(p->nonTerminal, "multVar") == 0 || strcmp(p->nonTerminal, "decVar") == 0){
+			geraMultVar(p, depth);
+			return 0;
+		}
 	}
 
 	for(i = 0; i < p->num_filhos; i++){
@@ -892,9 +833,6 @@ int main(int argc, char** argv){
 	else{
 		yyparse();
 	}
-	//fprintf(yyout, "[program "); 		// comment of the implemented code in parser
-	//printTree(treeRoot, 0);  			// comment of the implemented code in parser
-	//fprintf(yyout, "]\n"); 			// comment of the implemented code in parser
 
 	//Inicialização de ambiente
 	insereFunc(&funcs, "print");

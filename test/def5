@@ -4,7 +4,7 @@ def int bar()
   if(a == 3){
   	a = 4;
   }	else{
-  	a = 3;
-  }	
+  	a = 7;
+  }
   print(a);
 }

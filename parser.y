@@ -661,7 +661,7 @@ int geraExpr(tipoTree *p, int depth){
 	}
 	else if(p->num_filhos == 1)
 	{
-		printf("gera code funcall\n");
+		printf("gera code funcall filho\n");
 		return 1;
 	}
 	else if(p->tokenNumber == NUMBER) {
@@ -735,13 +735,26 @@ int geraMultStmt(tipoTree *p, int depth){
 		}
 		else if (p->filhos[0]->tokenNumber == RETURN)
 		{
+			//Se tiver um filho não nulo
+			if(p->filhos[1]->nonTerminal != NULL){
+				geraCode(p->filhos[1], depth);
+		
+				// volta o codigo do gerado
+				return 1;
+			} else{
+				// volta para quem chamou
+				return 1;
+			}
 		}
 		else if (p->filhos[0]->tokenNumber == BREAK)
 		{
 			fprintf(yyout, "j false_bw%d\n", cont_while);
+			return 1;
 		}
 		else if (p->filhos[0]->tokenNumber == CONTINUE)
 		{
+			fprintf(yyout, "j true_bw%d\n", cont_while);
+			return 1;
 		}
 		else{
 			if(strcmp(p->filhos[0]->filhos[0]->id, "print") == 0){
@@ -754,7 +767,11 @@ int geraMultStmt(tipoTree *p, int depth){
 				fprintf(yyout, "syscall\n");
 				return 1;
 			}
-			printf("gera funcall\n");
+			if(strcmp(p->filhos[0]->filhos[0]->id, "funcall") == 0){
+				
+				// GERAR CODIGO FUNCALL AQUI
+				printf("gera funCall in stmt\n");
+			}
 		}
 	}
 	for(i = 0; i < p->num_filhos; i++)

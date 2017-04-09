@@ -5,6 +5,7 @@ def int bar()
 
   while(a < 3){
   	a = a + 1;
+  	continue;
   	c = 2;
 	print(a);
   }

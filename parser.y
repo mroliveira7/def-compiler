@@ -93,8 +93,7 @@ compVar : {$$ = NULL;}
         | ASSIGN expr { $$ = cria_node("compVar", 2, terminalToken("=", ASSIGN), $2); }
         ;
 
-decFunc : DEF type NAME OPENPAR paramList CLOSEPAR block {  $$ = cria_node("decFunc" , 7, terminalToken("def", DEF), $2, terminalToken($3, NAME), terminalToken("(", OPENPAR), $5, terminalToken(")", CLOSEPAR), $7); 
-														  	/*contParams(paramList); ESTA DANDO ERRO*/
+decFunc : DEF type NAME OPENPAR paramList CLOSEPAR block {  $$ = cria_node("decFunc" , 7, terminalToken("def", DEF), $2, terminalToken($3, NAME), terminalToken("(", OPENPAR), $5, terminalToken(")", CLOSEPAR), $7);
 														  	insereFunc(&funcs, NAME, PARAM_N);
 														  	PARAM_N = 0;
 														 }
@@ -562,21 +561,22 @@ int trataVars(tipoTree *p){
 
 int trataFuncs(tipoTree *p){
 
+	int i;
 	if(p == NULL)
 		return 0;
+	if (p->nonTerminal != NULL){
+		if(strcmp(p->nonTerminal,"decFunc") == 0){
 
-	if(strcmp(p->nonTerminal,"decFunc") == 0){
-
-		if(!consultaFuncs(funcs, p->filhos[2]->id)) {
-			insereFunc(&funcs, p->filhos[2]->id, PARAM_N);
+			if(!consultaFuncs(funcs, p->filhos[2]->id)) {
+				insereFunc(&funcs, p->filhos[2]->id, PARAM_N);
+			}
 		}
 	}
-	else
-	{
-		int i;
-		for(i = 0; i < p->num_filhos; i++)
-			trataFuncs(p->filhos[i]);
-	}
+
+	for(i = 0; i < p->num_filhos; i++)
+		trataFuncs(p->filhos[i]);
+
+	return 1;
 }
 
 int geraExpr(tipoTree *p, int depth){
@@ -708,7 +708,7 @@ int contParams(tipoTree *p){
 }
 
 int empilhaParams(tipoTree *p, int depth){
-	
+
 	int num_filhos = 0; //VER VALOR DO NÚMERO DE FILHOS
 
 	int i;
@@ -736,6 +736,7 @@ int geraFuncall(tipoTree *p, int depth){
 	fprintf(yyout, "sw $fp, 0($sp)\n");
 	fprintf(yyout, "addiu $sp, $sp, -4\n");
 	if(p->filhos[2]){
+		contParams(p->filhos[2]);
 		empilhaParams(p->filhos[2], depth);
 	}
 	fprintf(yyout, "jal _%s:\n", p->filhos[0]->id);
@@ -804,7 +805,7 @@ int geraMultStmt(tipoTree *p, int depth){
 			//Se tiver um filho não nulo
 			if(p->filhos[1]->nonTerminal != NULL){
 				geraCode(p->filhos[1], depth);
-		
+
 				// volta o codigo do gerado
 				return 1;
 			} else{
@@ -923,8 +924,8 @@ int main(int argc, char** argv){
 	fprintf(yyout,".globl main\n\n");
 	fprintf(yyout,"main:\n");
 
-	//printTree(treeRoot, 0);
-	
+	// printTree(treeRoot, 0);
+
 	geraCode(treeRoot, 0);
 
 	//Printa acumulador

@@ -36,6 +36,7 @@ int G_NUM = 1;
 int G_ATT = 1;
 int G_ACC = 0;
 int SALVEI = 0;
+int PARAM_N;
 
 %}
 
@@ -92,7 +93,11 @@ compVar : {$$ = NULL;}
         | ASSIGN expr { $$ = cria_node("compVar", 2, terminalToken("=", ASSIGN), $2); }
         ;
 
-decFunc : DEF type NAME OPENPAR paramList CLOSEPAR block { $$ = cria_node("decFunc" , 7, terminalToken("def", DEF), $2, terminalToken($3, NAME), terminalToken("(", OPENPAR), $5, terminalToken(")", CLOSEPAR), $7); }
+decFunc : DEF type NAME OPENPAR paramList CLOSEPAR block {  $$ = cria_node("decFunc" , 7, terminalToken("def", DEF), $2, terminalToken($3, NAME), terminalToken("(", OPENPAR), $5, terminalToken(")", CLOSEPAR), $7); 
+														  	/*contParams(paramList); ESTA DANDO ERRO*/
+														  	insereFunc(&funcs, NAME, PARAM_N);
+														  	PARAM_N = 0;
+														 }
         ;
 
 paramList : {$$ = NULL;}
@@ -243,11 +248,12 @@ int consultaFuncs(listaFuncs *p, char *id){
 	return 0;
 }
 
-int insereFunc(listaFuncs **p, char *id){
+int insereFunc(listaFuncs **p, char *id, int childs_num){
 
 	listaFuncs *aux = malloc(sizeof(struct listaF));
 	strcpy(aux->fname, id);
 	aux->prox = *p;
+	aux->n_param = childs_num;
 	*p = aux;
 }
 
@@ -562,7 +568,7 @@ int trataFuncs(tipoTree *p){
 	if(strcmp(p->nonTerminal,"decFunc") == 0){
 
 		if(!consultaFuncs(funcs, p->filhos[2]->id)) {
-			insereFunc(&funcs, p->filhos[2]->id);
+			insereFunc(&funcs, p->filhos[2]->id, PARAM_N);
 		}
 	}
 	else
@@ -661,7 +667,7 @@ int geraExpr(tipoTree *p, int depth){
 	}
 	else if(p->num_filhos == 1)
 	{
-		printf("gera code funcall filho\n");
+		// printf("gera code funcall filho\n");
 		return 1;
 	}
 	else if(p->tokenNumber == NUMBER) {
@@ -682,11 +688,71 @@ int geraExpr(tipoTree *p, int depth){
 		}
 		return aux->varValue;
 	}
-	printf("aquiiiii\n");
 	for(i = 0; i < p->num_filhos; i++){
 		geraExpr(p->filhos[i], depth);
 	}
 	return 0;
+}
+
+int contParams(tipoTree *p){
+
+	int i;
+	if(p == NULL)
+		return 0;
+
+	if(p->tokenNumber == NAME)
+		PARAM_N++;
+
+	for(i = 0; i < p->num_filhos; i++)
+		contParams(p->filhos[i]);
+}
+
+int empilhaParams(tipoTree *p, int depth){
+	
+	int num_filhos = 0; //VER VALOR DO NÚMERO DE FILHOS
+
+	int i;
+	if(p == NULL)
+		return 0;
+
+	if(strcmp(p->nonTerminal, "multExpr") == 0){
+		geraExpr(p->filhos[1], depth);
+		return 1;
+	}
+	if(strcmp(p->nonTerminal, "arglist") == 0){
+		geraExpr(p->filhos[0], depth);
+		return 1;
+	}
+	for(i = num_filhos; i > 0 ; i--)
+		empilhaParams(p->filhos[i-1], depth);
+}
+
+int geraFuncall(tipoTree *p, int depth){
+
+	int i;
+	if(p == NULL)
+		return 0;
+
+	fprintf(yyout, "sw $fp, 0($sp)\n");
+	fprintf(yyout, "addiu $sp, $sp, -4\n");
+	if(p->filhos[2]){
+		empilhaParams(p->filhos[2], depth);
+	}
+	fprintf(yyout, "jal _%s:\n", p->filhos[0]->id);
+
+	return 1;
+}
+
+int geraDefFunc(tipoTree *p, int depth){
+	int i;
+	fprintf(yyout, "_%s:\n", p->filhos[2]->id);
+	fprintf(yyout, "move $fp, $sp\n");
+	fprintf(yyout, "sw $ra, 0($sp)\n");
+	fprintf(yyout, "addiu $sp, $sp, -4\n");
+	geraCode(p->filhos[6], depth);
+	// colocar os parametros correto
+	// desempilhar
+	// chamar geração do return
 }
 
 int geraMultStmt(tipoTree *p, int depth){
@@ -758,7 +824,7 @@ int geraMultStmt(tipoTree *p, int depth){
 		}
 		else{
 			if(strcmp(p->filhos[0]->filhos[0]->id, "print") == 0){
-				printf("Printa algo\n");
+				// printf("Printa algo\n");
 				geraExpr(p->filhos[0]->filhos[2]->filhos[0], depth);
 				fprintf(yyout, "li $v0, 1\n");
 				fprintf(yyout, "syscall\n");
@@ -767,15 +833,14 @@ int geraMultStmt(tipoTree *p, int depth){
 				fprintf(yyout, "syscall\n");
 				return 1;
 			}
-			if(strcmp(p->filhos[0]->filhos[0]->id, "funcall") == 0){
-				
-				// GERAR CODIGO FUNCALL AQUI
-				printf("gera funCall in stmt\n");
-			}
+
+			printf("gera funCall in stmt\n");
+			geraFuncall(p->filhos[0], depth);
+			return 1;
 		}
 	}
 	for(i = 0; i < p->num_filhos; i++)
-		geraMultStmt(p->filhos[i], depth);
+		geraMultStmt(p->filhos[0], depth);
 
 	return 0;
 }
@@ -814,10 +879,9 @@ int geraCode(tipoTree *p, int depth){
 
 	if(p->nonTerminal != NULL){
 
-		printf("%s\n", p->nonTerminal);
+		// printf("%s\n", p->nonTerminal);
 
 		if(strcmp(p->nonTerminal, "expr") == 0){
-			printf("jeba\n");
 			geraExpr(p, depth);
 			return 0;
 		}
@@ -847,7 +911,7 @@ int main(int argc, char** argv){
 	}
 
 	//Inicialização de ambiente
-	insereFunc(&funcs, "print");
+	insereFunc(&funcs, "print", 0); //VER VALOR DO NÚMERO DE FILHOS
 	trataFuncs(treeRoot);
 
 	//Inicializacao MIPS
